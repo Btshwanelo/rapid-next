@@ -20,9 +20,9 @@ type EmpathyPoint = {
 
 type EmpathySection = {
   thinks: EmpathyPoint[];
-  sees: EmpathyPoint[];
+  does: EmpathyPoint[];
   says: EmpathyPoint[];
-  hears: EmpathyPoint[];
+  feels: EmpathyPoint[];
 };
 
 type EmpathyData = {
@@ -53,9 +53,9 @@ const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
 
 const createEmptySection = (): EmpathySection => ({
   thinks: [],
-  sees: [],
+  does: [],
   says: [],
-  hears: [],
+  feels: [],
 });
 
 const getMockDataForPersona = (personaId: string): EmpathySection => {
@@ -65,7 +65,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "How do I get started?" },
         { id: generateUniqueId(), content: "Will this be hard to learn?" }
       ],
-      sees: [
+      does: [
         { id: generateUniqueId(), content: "Clean interface" },
         { id: generateUniqueId(), content: "Tutorial prompts" }
       ],
@@ -73,7 +73,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "I need help with this" },
         { id: generateUniqueId(), content: "Where is the documentation?" }
       ],
-      hears: [
+      feels: [
         { id: generateUniqueId(), content: "It's user-friendly" },
         { id: generateUniqueId(), content: "Support is helpful" }
       ]
@@ -83,7 +83,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "Need more advanced features" },
         { id: generateUniqueId(), content: "How can I automate this?" }
       ],
-      sees: [
+      does: [
         { id: generateUniqueId(), content: "Advanced settings" },
         { id: generateUniqueId(), content: "Power user tools" }
       ],
@@ -91,7 +91,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "This could be more efficient" },
         { id: generateUniqueId(), content: "Let me customize this" }
       ],
-      hears: [
+      feels: [
         { id: generateUniqueId(), content: "New features coming soon" },
         { id: generateUniqueId(), content: "Performance improvements" }
       ]
@@ -101,7 +101,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "System security is crucial" },
         { id: generateUniqueId(), content: "Need to monitor usage" }
       ],
-      sees: [
+      does: [
         { id: generateUniqueId(), content: "Admin dashboard" },
         { id: generateUniqueId(), content: "System logs" }
       ],
@@ -109,7 +109,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "We need better controls" },
         { id: generateUniqueId(), content: "Let me check the logs" }
       ],
-      hears: [
+      feels: [
         { id: generateUniqueId(), content: "Security concerns" },
         { id: generateUniqueId(), content: "User feedback" }
       ]
@@ -119,7 +119,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "How can I help users better?" },
         { id: generateUniqueId(), content: "Common user problems" }
       ],
-      sees: [
+      does: [
         { id: generateUniqueId(), content: "Support tickets" },
         { id: generateUniqueId(), content: "User interactions" }
       ],
@@ -127,7 +127,7 @@ const getMockDataForPersona = (personaId: string): EmpathySection => {
         { id: generateUniqueId(), content: "Let me help you with that" },
         { id: generateUniqueId(), content: "Have you tried this?" }
       ],
-      hears: [
+      feels: [
         { id: generateUniqueId(), content: "User frustrations" },
         { id: generateUniqueId(), content: "Feature requests" }
       ]
@@ -153,10 +153,10 @@ const EmpathyMap = () => {
       ...prev,
       ai: aiData,
       combined: {
-        thinks: [...prev.user.thinks, ...aiData.thinks],
-        sees: [...prev.user.sees, ...aiData.sees],
         says: [...prev.user.says, ...aiData.says],
-        hears: [...prev.user.hears, ...aiData.hears],
+        does: [...prev.user.does, ...aiData.does],
+        feels: [...prev.user.feels, ...aiData.feels],
+        thinks: [...prev.user.thinks, ...aiData.thinks],
       }
     }));
   };
@@ -199,9 +199,9 @@ const EmpathyMap = () => {
   };
 
   const renderEmpathySection = (title: string, category: keyof EmpathySection) => (
-    <Card className="h-64">
+    <Card className="h-64 bg-[#0f0f43] border-none">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardTitle className="text-lg text-white">{title}</CardTitle>
         {isEditing && activeTab !== 'combined' && (
           <Button
             variant="outline"
@@ -237,8 +237,8 @@ const EmpathyMap = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="p-3 rounded-lg bg-secondary/80">
-                  <p className="text-sm">{point.content}</p>
+                <div className="p-2 rounded-lg w-fit ">
+                  <p className="text-sm text-white">{point.content}</p>
                 </div>
               )}
             </div>
@@ -302,17 +302,17 @@ const EmpathyMap = () => {
       </div>
 
       <Tabs value={activeTab}  onValueChange={(value: string) => setActiveTab(value as 'user' | 'ai' | 'combined')} className="w-full">
-        <TabsList className="mb-6" >
-          <TabsTrigger value="user">User Generated</TabsTrigger>
-          <TabsTrigger value="ai">AI Generated</TabsTrigger>
-          <TabsTrigger value="combined">Combined View</TabsTrigger>
+        <TabsList className="bg-[#0f0f43] p-1 mb-6" >
+          <TabsTrigger value="user" className="data-[state=active]:bg-blue-600">User Generated</TabsTrigger>
+          <TabsTrigger value="ai" className="data-[state=active]:bg-blue-600">AI Generated</TabsTrigger>
+          <TabsTrigger value="combined" className="data-[state=active]:bg-blue-600">Combined View</TabsTrigger>
         </TabsList>
 
         <div className="grid grid-cols-2 gap-6">
-          {renderEmpathySection('Thinks & Feels', 'thinks')}
-          {renderEmpathySection('Sees', 'sees')}
-          {renderEmpathySection('Says & Does', 'says')}
-          {renderEmpathySection('Hears', 'hears')}
+          {renderEmpathySection('Says', 'says')}
+          {renderEmpathySection('Does', 'does')}
+          {renderEmpathySection('Feels', 'feels')}
+          {renderEmpathySection('Thinks', 'thinks')}
         </div>
       </Tabs>
     </div>

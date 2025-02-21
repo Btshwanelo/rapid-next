@@ -255,7 +255,7 @@ const PersonaCard = ({
   selected?: boolean;
   showActions?: boolean;
 }) => (
-  <Card className={`relative ${selected ? 'ring-2 ring-primary' : ''}`}>
+  <Card className={`relative ${selected ? 'ring-2 ring-primary' : ''} bg-[#0f0f43] border-none text-white`}>
     <CardHeader className="p-4">
       <CardTitle className="flex items-center gap-4">
         <Avatar className="w-16 h-16">
@@ -264,23 +264,23 @@ const PersonaCard = ({
         </Avatar>
         <div>
           <h3 className="text-lg font-semibold">{persona.name}</h3>
-          <p className="text-sm text-gray-500">{persona.occupation}</p>
+          <p className="text-sm text-gray-100">{persona.occupation}</p>
         </div>
       </CardTitle>
     </CardHeader>
     <CardContent className="p-4">
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-gray-500">Description</label>
+          <label className="text-sm font-medium text-gray-100">Description</label>
           <p className="mt-1">{persona.description}</p>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-500">Age</label>
+            <label className="text-sm font-medium text-gray-100">Age</label>
             <p className="mt-1">{persona.age}</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-500">Gender</label>
+            <label className="text-sm font-medium text-gray-100">Gender</label>
             <p className="mt-1">{persona.gender}</p>
           </div>
         </div>
@@ -430,9 +430,9 @@ const SystemPersonasPage = () => {
       </div>
 
       <Tabs defaultValue="selected" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="selected">Selected Personas</TabsTrigger>
-          <TabsTrigger value="ai">AI Suggested Personas</TabsTrigger>
+        <TabsList className='bg-[#0f0f43] p-1'>
+          <TabsTrigger value="selected" className="data-[state=active]:bg-blue-600 ">Selected Personas</TabsTrigger>
+          <TabsTrigger value="ai" className="data-[state=active]:bg-blue-600">AI Suggested Personas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="selected">
@@ -456,11 +456,7 @@ const SystemPersonasPage = () => {
 
         <TabsContent value="ai">
           {aiSuggestedPersonas.length === 0 ? (
-            <Alert>
-              <AlertDescription>
-                No AI-suggested personas yet. Click "Generate AI Personas" to get suggestions.
-              </AlertDescription>
-            </Alert>
+            <EmptyState />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {aiSuggestedPersonas.map(persona => (

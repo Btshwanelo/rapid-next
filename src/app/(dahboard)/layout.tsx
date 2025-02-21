@@ -4,6 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Settings, User } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 
 export default function DashboardLayout({
@@ -28,9 +29,11 @@ export default function DashboardLayout({
         </div>
       {/* Top Navigation */}
       <header className="h-16 flex items-center  px-6 ">
-      <div className="p-6 flex items-center gap-2 mr-auto">
+      <div className="p-6  mr-auto">
+        <Link href={'/dashboard'} className="flex items-center gap-2">
           <div className="w-8 h-8 bg-white rounded-lg" />
           <span className="text-white font-bold">Rapid Code</span>
+        </Link>
       </div>
         <div className="flex items-center space-x-4">
           <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white">

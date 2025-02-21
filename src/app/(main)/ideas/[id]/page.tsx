@@ -8,7 +8,6 @@ interface Idea {
     status: 'active' | 'rejected';
     category?: string;
     createdAt: Date;
-    // Extended properties
     impact?: number;
     feasibility?: number;
     pros?: string[];
@@ -78,7 +77,7 @@ interface Idea {
     const [activeTab, setActiveTab] = useState('overview');
   const [idea, setIdea] = useState(sampleIdea)
     return (
-      <div className="min-h-screen space-y-6">
+      <div className="min-h-screen space-y-6 p-6">
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
@@ -92,9 +91,9 @@ interface Idea {
             <h1 className="text-3xl font-bold text-white">{idea.title}</h1>
             <p className="text-gray-400 mt-2">{idea.description}</p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          {/* <Button className="bg-blue-600 hover:bg-blue-700">
             Edit Idea
-          </Button>
+          </Button> */}
         </div>
   
         {/* Key Metrics */}

@@ -101,9 +101,9 @@ const ExperienceMap = () => {
   };
 
   const renderFeatureCard = (feature: Feature) => (
-    <Card key={feature.id} className="w-full">
-      <CardHeader className={`${timelineColors[feature.timeline]} p-4`}>
-        <CardTitle className="text-lg">
+    <Card key={feature.id} className="w-full bg-[#0f0f43] border-none text-white">
+      <CardHeader className={`${timelineColors[feature.timeline]} p-4 rounded-t-sm`}>
+        <CardTitle className="text-lg text-gray-700">
           {editingFeature?.id === feature.id ? (
             <Input
               value={editingFeature.title}
@@ -121,13 +121,14 @@ const ExperienceMap = () => {
             <Input
               value={editingFeature.description}
               onChange={e => setEditingFeature({ ...editingFeature, description: e.target.value })}
-              className="mb-2"
+              className="mb-2 text-gray-700"
             />
             <Select
               value={editingFeature.timeline}
+              
               onValueChange={value => setEditingFeature({ ...editingFeature, timeline: value as Feature['timeline'] })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="text-gray-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -150,10 +151,10 @@ const ExperienceMap = () => {
             <p className="mb-4">{feature.description}</p>
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="ghost" onClick={() => setEditingFeature(feature)}>
-                <Edit2 className="w-4 h-4" />
+                <Edit2 className="w-4 h-4" /> Edit
               </Button>
               <Button size="sm" variant="ghost" onClick={() => handleDeleteFeature(feature.id)}>
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" /> Delete
               </Button>
             </div>
           </>

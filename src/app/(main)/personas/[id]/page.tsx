@@ -125,7 +125,7 @@ export default function PersonaDetailPage() {
   };
 
   return (
-    <div className="min-h-screen space-y-8">
+    <div className="min-h-screen space-y-8 p-6">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-6">

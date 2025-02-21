@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X, FileText } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, FileText, Circle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -175,72 +175,75 @@ const ProblemStatementsPage = () => {
   };
 
   const renderProblemStatement = (statement: ProblemStatement) => (
-    <Card key={statement.id} className="w-full">
+    <Card key={statement.id} className="w-full bg-[#0f0f43] text-white border-none">
       <CardHeader className="p-4">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span className="flex items-center gap-2">
+        <CardTitle className="text-lg text-white flex items-center justify-between">
+          <span className="flex items-center gap-2 text-white">
             <FileText className="w-4 h-4" />
             {statement.userType}
           </span>
-          <Badge variant="outline">
+          <Badge variant="outline" className='text-white'>
             {new Date(statement.createdAt).toLocaleDateString()}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-2 gap-2">
       {/* Our user is section - Highlighted */}
-      <div className="col-span-2 bg-primary/5 rounded-lg p-2 align-middle justify-center">
-        <div className="flex  gap-1 align-middle items-center">
-          <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-primary text-primary font-semibold text-sm mr-2"></span>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+          <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
-            <h3 className="font-semibold text-primary  mr-2 ">Our user is</h3>
-            <p className="text-sm text-gray-600">{statement.userDescription}</p>
+            <h3 className="font-semibold text-white  mr-2 ">Our user is</h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.userDescription}</p>
           </div>
         </div>
       </div>
-      <div className="col-span-2 bg-primary/5 rounded-lg p-2 align-middle justify-center">
-        <div className="flex  gap-1 align-middle items-center">
-           <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-primary text-primary font-semibold text-sm mr-2"></span>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+          <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
-            <h3 className="font-semibold text-primary  mr-2">We will improve</h3>
-            <p className="text-sm text-gray-600">{statement.improvement}</p>
+            <h3 className="font-semibold text-white  mr-2 ">We will improve his or her
+            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.improvement}</p>
           </div>
         </div>
       </div>
-      <div className="col-span-2 bg-primary/5 rounded-lg p-2 align-middle justify-center">
-        <div className="flex  gap-1 align-middle items-center">
-           <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-primary text-primary font-semibold text-sm mr-2"></span>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
-            <h3 className="font-semibold text-primary  mr-2">Current struggles</h3>
-            <p className="text-sm text-gray-600">{statement.struggles}</p>
+            <h3 className="font-semibold text-white  mr-2 ">Currently this user struggles because
+            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.struggles}</p>
           </div>
         </div>
       </div>
-      <div className="col-span-2 bg-primary/5 rounded-lg p-2 align-middle justify-center">
-        <div className="flex  gap-1 align-middle items-center">
-           <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-primary text-primary font-semibold text-sm mr-2"></span>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
-            <h3 className="font-semibold text-primary  mr-2">ideal state</h3>
-            <p className="text-sm text-gray-600">{statement.idealState}</p>
+            <h3 className="font-semibold text-white  mr-2 ">It's kinda like</h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.comparison}</p>
           </div>
         </div>
       </div>
-      <div className="col-span-2 bg-primary/5 rounded-lg p-2 align-middle justify-center">
-        <div className="flex  gap-1 align-middle items-center">
-           <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-primary text-primary font-semibold text-sm mr-2"></span>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
-            <h3 className="font-semibold text-primary  mr-2">It's kinda like</h3>
-            <p className="text-sm text-gray-600">{statement.comparison}</p>
+            <h3 className="font-semibold text-white  mr-2 ">In a perfect world, he or she would be able to            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.idealState}</p>
           </div>
         </div>
       </div>
-      <div className="col-span-2 bg-primary/5 rounded-lg p-2 align-middle justify-center">
-        <div className="flex  gap-1 align-middle items-center">
-           <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-primary text-primary font-semibold text-sm mr-2"></span>
+     
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
-            <h3 className="font-semibold text-primary  mr-2">World benefit</h3>
-            <p className="text-sm text-gray-600">{statement.worldBenefit}</p>
+            <h3 className="font-semibold text-white  mr-2 ">This would be great for the world because            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.worldBenefit}</p>
           </div>
         </div>
       </div>

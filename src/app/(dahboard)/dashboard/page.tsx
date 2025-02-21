@@ -45,9 +45,11 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+        <Link href={'/project/new'} >
         <Button className="bg-blue-600 hover:bg-blue-700">
           <Plus className="mr-2 h-4 w-4" /> New Project
         </Button>
+        </Link>
       </div>
 
       {/* Welcome Card */}

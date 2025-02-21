@@ -152,7 +152,7 @@ const StoryboardPage = () => {
   };
 
   const renderFrame = (frame: Frame, index: number) => (
-    <Card key={frame.id} className="w-full">
+    <Card key={frame.id} className="w-full bg-[#0f0f43] border-none text-white">
       <CardHeader className="p-4">
         <CardTitle className="text-lg">Frame {index + 1}</CardTitle>
       </CardHeader>
@@ -232,9 +232,9 @@ const StoryboardPage = () => {
         <EmptyState />
       ) : (
         <Tabs value={selectedStoryboard || ''} onValueChange={setSelectedStoryboard}>
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 bg-[#0f0f43] p-1">
             {storyboards.map(storyboard => (
-              <TabsTrigger key={storyboard.id} value={storyboard.id} className="flex items-center">
+              <TabsTrigger key={storyboard.id} value={storyboard.id} className="flex items-center data-[state=active]:bg-blue-600">
                 <Users className="w-4 h-4 mr-2" />
                 {storyboard.userType}
               </TabsTrigger>

@@ -144,27 +144,27 @@ const IdeasPage = () => {
   };
 
   const renderIdeaCard = (idea: Idea) => (
-    <Card key={idea.id} className={`w-full ${idea.status === 'rejected' ? 'opacity-60' : ''}`}>
+    <Card key={idea.id} className={`w-full bg-[#0f0f43] text-white border-none ${idea.status === 'rejected' ? 'opacity-60' : ''}`}>
       <CardHeader className="p-4">
         <CardTitle className="text-lg flex items-center justify-between">
           <span className="flex items-center gap-2">
             {idea.title}
             {idea.isAIGenerated && (
-              <Badge variant="secondary">
+              <Badge variant="secondary" >
                 <Sparkles className="w-3 h-3 mr-1" />
                 AI Generated
               </Badge>
             )}
           </span>
           {idea.methodology && (
-            <Badge variant="outline">{idea.methodology}</Badge>
+            <Badge variant="outline" className='text-white'>{idea.methodology}</Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <p className="text-gray-600">{idea.description}</p>
+        <p className=" text-white">{idea.description}</p>
         {idea.category && (
-          <Badge variant="outline" className="mt-2">
+          <Badge variant="outline" className="mt-2 text-white">
             {idea.category}
           </Badge>
         )}
@@ -371,11 +371,11 @@ const IdeasPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList>
-          <TabsTrigger value="all">All Ideas</TabsTrigger>
-          <TabsTrigger value="ai">AI Generated</TabsTrigger>
-          <TabsTrigger value="manual">Manual</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        <TabsList className='bg-[#0f0f43] p-1'>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="all">All Ideas</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="ai">AI Generated</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="manual">Manual</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="rejected">Rejected</TabsTrigger>
         </TabsList>
       </Tabs>
 

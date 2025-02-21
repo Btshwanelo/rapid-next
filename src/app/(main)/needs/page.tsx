@@ -152,7 +152,7 @@ const NeedsStatementCard = ({
   };
 
   return (
-    <Card className={statement.status === 'rejected' ? 'opacity-60' : ''}>
+    <Card className={statement.status === 'rejected' ? 'opacity-60' : '','bg-[#0f0f43] text-white border-none'}>
       <CardHeader className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ const NeedsStatementCard = ({
             </Avatar>
             <div>
               <h3 className="font-medium">{persona.name}</h3>
-              <p className="text-sm text-gray-500">{persona.occupation}</p>
+              <p className="text-sm ">{persona.occupation}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -170,7 +170,7 @@ const NeedsStatementCard = ({
               {statement.priority} priority
             </Badge>
             {statement.category && (
-              <Badge variant="outline">{statement.category}</Badge>
+              <Badge variant="outline" className='text-white'>{statement.category}</Badge>
             )}
           </div>
         </div>
@@ -178,7 +178,7 @@ const NeedsStatementCard = ({
       <CardContent className="p-4">
         <p className="text-lg font-medium mb-2">{statement.statement}</p>
         {statement.context && (
-          <p className="text-gray-600 text-sm">{statement.context}</p>
+          <p className=" text-sm">{statement.context}</p>
         )}
       </CardContent>
       <CardFooter className="p-4 flex justify-between">
