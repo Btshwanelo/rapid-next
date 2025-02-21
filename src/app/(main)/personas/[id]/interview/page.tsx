@@ -136,10 +136,10 @@ export default function InterviewPage() {
               <CardContent className="p-6 space-y-6">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold text-white">Interview Questions</h2>
-                  <Button onClick={handleGenerateQuestions} disabled={loading}>
+                  {/* <Button onClick={handleGenerateQuestions} disabled={loading}>
                     <Brain className="w-4 h-4 mr-2" />
                     Generate Questions
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {loading ? (

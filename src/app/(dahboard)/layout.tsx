@@ -13,7 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen container">
         {/* Background Image */}
         <div className="fixed inset-0 -z-10">
           <Image
@@ -28,14 +28,14 @@ export default function DashboardLayout({
           {/* <div className="absolute inset-0 bg-[#0A0A29]/90 backdrop-blur-sm" /> */}
         </div>
       {/* Top Navigation */}
-      <header className="h-16 flex items-center  px-6 ">
-      <div className="p-6  mr-auto">
+      <header className="h-16 flex items-center px-6">
+      <div className="mr-auto">
         <Link href={'/dashboard'} className="flex items-center gap-2">
           <div className="w-8 h-8 bg-white rounded-lg" />
           <span className="text-white font-bold">Rapid Code</span>
         </Link>
       </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-2">
           <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white">
             <Settings className="h-5 w-5" />
           </Button>

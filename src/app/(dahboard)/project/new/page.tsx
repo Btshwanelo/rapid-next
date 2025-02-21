@@ -30,7 +30,7 @@ export default function CreateProject() {
 
   return (
     <div className="flex  items-center justify-center mt-10">
-      <Card className="w-full max-w-4xl bg-[#0f0f43] backdrop-blur-sm shadow-xl border-0">
+      <Card className="w-full max-w-7xl bg-[#0f0f43] backdrop-blur-sm shadow-xl border-0">
         <CardContent className="p-8">
           <div className="space-y-8">
             <div className="text-center space-y-2">

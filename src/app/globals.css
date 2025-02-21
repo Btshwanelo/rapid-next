@@ -125,3 +125,14 @@ body {
 ::-webkit-scrollbar-thumb {
   @apply bg-blue-500/50 rounded-full hover:bg-blue-500/70 transition-colors;
 }
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
