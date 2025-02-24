@@ -4,18 +4,27 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import Image from 'next/image';
 
 const LoginPage = () => {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row">
       {/* Left side - Hero Image */}
-      <div className="w-full lg:w-1/2 bg-gradient-to-br from-purple-900 via-purple-800 to-blue-900 p-6 lg:p-12 relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="text-xs text-white/80 mb-4">RAPID CODE AI</div>
-          <h1 className="text-2xl md:text-4xl lg:text-5xl text-white font-bold max-w-2xl mb-2">
+      <div className="w-full lg:w-1/2  p-6 lg:p-12 relative flex flex-col justify-center align-middle overflow-hidden">
+      <Image
+                  src={'/images/background-cover-auth-signin.webp'}
+                  alt="Background"
+                  fill
+                  priority
+                  className="object-cover"
+                  quality={100}
+                />
+        <div className="relative z-10 space-y-10">
+          <div className="text-xs text-white mb-4">RAPID CODE AI</div>
+          <h1 className="text-2xl md:text-4xl lg:text-5xl text-white font-bold  mb-2">
             WELCOME TO RAPID CODE AI
           </h1>
-          <p className="text-white/80 text-sm md:text-base">
+          <p className="text-white text-sm md:text-base">
             IDEATION TO IMPLEMENTATION, SIMPLIFIED
           </p>
         </div>
@@ -29,8 +38,8 @@ const LoginPage = () => {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 bg-gray-950 flex items-center justify-center p-6 lg:p-12">
-        <Card className="w-full max-w-md bg-gray-950 border-gray-800">
+      <div className="w-full lg:w-1/2 bg-[#0f0f43] flex items-center justify-center p-6 lg:p-12">
+        <Card className="w-full max-w-md bg-[#0f0f43] border-none border-gray-800">
           <CardHeader>
             <h2 className="text-2xl font-semibold text-white mb-2">Nice to see you!</h2>
             <p className="text-gray-400 text-sm">
@@ -78,7 +87,8 @@ const LoginPage = () => {
             
             <div className="text-center text-sm text-gray-400">
               Don't have an account?{' '}
-              <a href="#" className="text-blue-500 hover:text-blue-400">
+
+              <a href="/register" className="text-blue-500 hover:text-blue-400">
                 Sign up
               </a>
             </div>

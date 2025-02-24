@@ -1,23 +1,48 @@
-import { useQuery } from "@tanstack/react-query";
-import { useUserStore } from "../store/userStore";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDashboardStore } from "../store/dashboardStore";
 
-const PROD_BASE_URL = 'http://172.172.166.174:5002';
+const PROD_BASE_URL = "http://172.172.166.174:5002/api/v2";
 
-const fetchUser = async () => {
-  const res = await fetch(`${PROD_BASE_URL}/api/user`);
-  if (!res.ok) throw new Error("Failed to fetch user");
-  return res.json();
+// Define API response type
+type DashboardData = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  profilePicture: string;
+  skills: string[];
+  createdAt: string;
 };
 
-export const useUser = () => {
-  const { setUser } = useUserStore();
-  return useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const user = await fetchUser();
-      setUser(user); // Update Zustand store
-      return user;
-    },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+// API Fetch Function
+const fetchDashboardData = async (): Promise<DashboardData> => {
+  const res = await fetch(`${PROD_BASE_URL}/me`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
   });
+
+  if (!res.ok) throw new Error("Failed to fetch dashboard data");
+
+  const result = await res.json();
+  return result.data;
+};
+
+// useDashboard Hook
+export const useDashboard = () => {
+  const { setDashboardData, clearDashboardData } = useDashboardStore();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, refetch } = useQuery<DashboardData, Error>({
+    queryKey: ["dashboard"],
+    queryFn: fetchDashboardData,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    onSuccess: (data) => {
+      setDashboardData(data);
+    },
+    onError: () => {
+      clearDashboardData();
+    },
+  });
+
+  return { data, isLoading, isError, refetch };
 };

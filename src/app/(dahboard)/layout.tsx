@@ -13,7 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen container">
+    <div className="min-h-screen container mx-auto">
         {/* Background Image */}
         <div className="fixed inset-0 -z-10">
           <Image

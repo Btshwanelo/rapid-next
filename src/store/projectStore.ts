@@ -1,19 +1,28 @@
 import { create } from "zustand";
 
-type User = {
-  id: string;
+// Define Project Type
+type Project = {
+  _id: string;
   name: string;
-  email: string;
+  description: string;
+  image: string;
+  projectType: string;
+  createdAt: string;
 };
 
-type UserStore = {
-  user: User | null;
-  setUser: (user: User) => void;
-  logout: () => void;
+// Zustand Store
+type ProjectStore = {
+  projects: Project[];  // List of projects
+  currentProject: Project | null; // Selected project
+  setProjects: (projects: Project[]) => void;
+  setCurrentProject: (project: Project) => void;
+  clearCurrentProject: () => void;
 };
 
-export const useProjectStore = create<UserStore>((set) => ({
-  user: null,
-  setUser: (user) => set({ user }),
-  logout: () => set({ user: null }),
+export const useProjectStore = create<ProjectStore>((set) => ({
+  projects: [],
+  currentProject: null,
+  setProjects: (projects) => set({ projects }),
+  setCurrentProject: (project) => set({ currentProject: project }),
+  clearCurrentProject: () => set({ currentProject: null }),
 }));
