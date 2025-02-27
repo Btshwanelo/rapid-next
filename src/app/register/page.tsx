@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,8 +6,31 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import Image from 'next/image';
+import { useAuth } from '@/hooks/useAuth';
 
 const RegisterPage = () => {
+  // Example Usage:
+
+const { register, isRegistering, error,clearError } = useAuth();
+console.log({ register, isRegistering, error,clearError })
+const handleRegister = () => {
+  register({ 
+    name: "John Doe", 
+    email: "john@example.com", 
+    password: "password123",
+    role: 'user' 
+  });
+};
+
+// Displaying errors in UI
+{error && (
+  <div className="error-message">
+    {error}
+    <button onClick={clearError}>Dismiss</button>
+  </div>
+)}
+
+
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row">
       {/* Left side - Hero Image */}
@@ -81,7 +105,7 @@ const RegisterPage = () => {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleRegister} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
               SIGN IN
             </Button>
             
