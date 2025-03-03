@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { useProject } from "@/hooks/useProject";
+import { useRouter } from "next/navigation";
 
 export default function CreateProject() {
+  const {createProject,createProjectMutation} = useProject()
+  const route = useRouter()
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -25,8 +29,15 @@ export default function CreateProject() {
     e.preventDefault();
     // Here you would typically handle the form submission
     console.log("Project data:", formData);
+    createProject({
+      "name": "Desigjhbu yn",
+      "description": "g yug uigy il",
+      "image": "https://placehold.co/400"
+  })
     // Add your API call or state management logic here
   };
+
+  createProjectMutation.isSuccess && route.push('/problem-statement')
 
   return (
     <div className="flex  items-center justify-center mt-10">

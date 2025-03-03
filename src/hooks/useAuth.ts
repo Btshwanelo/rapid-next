@@ -5,7 +5,7 @@ import { useState } from "react";
 
 // API URL Configuration
 // Consider moving this to an environment variable
-const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://localhost:3002/api/v2/auth";
+const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://localhost:5002/api/v2/auth";
 
 // Types
 type RegisterData = { 
@@ -97,8 +97,8 @@ type UseAuthReturn = {
   register: (data: RegisterData) => void;
   login: (data: LoginData) => void;
   logout: () => void;
-  isRegistering: boolean;
-  isLoggingIn: boolean;
+  registerMutation: any;
+  loginMutation: any;
   error: string | null;
   clearError: () => void;
 };
@@ -148,12 +148,6 @@ export const useAuth = (): UseAuthReturn => {
     },
   });
 
-  // Logout Function
-  const handleLogout = () => {
-    logout();
-    queryClient.clear(); // Clear cache when logging out
-    clearError();
-  };
 
   return {
     register: (data: RegisterData) => {
@@ -164,9 +158,13 @@ export const useAuth = (): UseAuthReturn => {
       clearError();
       loginMutation.mutate(data);
     },
-    logout: handleLogout,
-    isRegistering: registerMutation.isPending,
-    isLoggingIn: loginMutation.isPending,
+    logout: () => {
+      logout();
+      queryClient.clear(); 
+      clearError();
+    },
+    registerMutation,
+    loginMutation,
     error: authError,
     clearError,
   } as UseAuthReturn;

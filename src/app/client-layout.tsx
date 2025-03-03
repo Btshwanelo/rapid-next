@@ -2,8 +2,9 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import Image from "next/image";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { PersistGate } from "redux-persist/integration/react";
+import { Provider } from "react-redux";
+import store, { persistor } from "@/store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,12 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}>
-        <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
           {/* Background Image */}
           <div className="fixed inset-0 -z-10">
             <Image
@@ -36,7 +37,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
           {/* Main Content */}
           <div className="relative z-0">{children}</div>
-        </QueryClientProvider>
+          </PersistGate>
+          </Provider>
       </body>
     </html>
   );

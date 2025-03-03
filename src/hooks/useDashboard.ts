@@ -14,14 +14,23 @@ type DashboardData = {
   createdAt: string;
 };
 
-// API Fetch Function
+// API Fetch Function with Authorization Header
 const fetchDashboardData = async (): Promise<DashboardData> => {
-  const res = await fetch(`${PROD_BASE_URL}/me`, {
+  const token = localStorage.getItem("token"); // Retrieve token from storage
+  if (!token) throw new Error("No auth token found. Please log in.");
+
+  const res = await fetch(`${PROD_BASE_URL}/dashboard`, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`, // Add authorization token
+    },
   });
 
-  if (!res.ok) throw new Error("Failed to fetch dashboard data");
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to fetch dashboard data");
+  }
 
   const result = await res.json();
   return result.data;
@@ -32,17 +41,18 @@ export const useDashboard = () => {
   const { setDashboardData, clearDashboardData } = useDashboardStore();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError, refetch } = useQuery<DashboardData, Error>({
+  const { data, isLoading, isError, refetch, error } = useQuery<DashboardData, Error>({
     queryKey: ["dashboard"],
     queryFn: fetchDashboardData,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    onSuccess: (data) => {
+    onSuccess: (data:any) => {
       setDashboardData(data);
     },
-    onError: () => {
+    onError: (err:any) => {
+      console.error("Error fetching dashboard:", err.message);
       clearDashboardData();
     },
   });
 
-  return { data, isLoading, isError, refetch };
+  return { data, isLoading, isError, error, refetch };
 };
