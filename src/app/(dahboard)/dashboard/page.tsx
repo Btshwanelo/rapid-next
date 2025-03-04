@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Plus, Copy } from "lucide-react";
 import Link from 'next/link';
+import { useGetDashboardQuery } from '@/services/dashboardService';
+import useAuth from '@/hooks/useAuth';
 
 
 interface Project {
@@ -39,6 +41,9 @@ const projects: Project[] = [
 ];
 
 export default function DashboardPage() {
+  const authDetails = useAuth()
+  const dashboardData=useGetDashboardQuery(authDetails.token)
+  console.log('das',dashboardData.data)
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -59,7 +64,7 @@ export default function DashboardPage() {
       <Card className="bg-gradient-to-r  from-blue-600 to-blue-400 border-none " style={{ backgroundImage: `url('/images/welcome-profile.png')` }}>
         <CardContent className="pt-6">
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">Welcome Back Mish</h2>
+            <h2 className="text-2xl font-bold text-white">Welcome Back {dashboardData?.data?.data.user.name}</h2>
             <p className="text-blue-100">Nice to see you</p>
             {/* <Button variant="secondary" className="mt-4 bg-white/10 text-white hover:bg-white/20">
               Start <ArrowRight className="ml-2 h-4 w-4" />
@@ -72,7 +77,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-xl text-white">New Ideas</p>
-                <h3 className="text-2xl font-bold text-white">+347</h3>
+                <h3 className="text-2xl font-bold text-white">{dashboardData?.data?.data.stats.projectsCount}</h3>
               </div>
               <Button size="icon" variant="ghost" className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10">
                 <Copy className="h-5 w-5" />

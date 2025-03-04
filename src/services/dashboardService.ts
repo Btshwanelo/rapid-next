@@ -2,20 +2,12 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const dashboardSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    LoginUser: builder.mutation({
-      query: (body) => ({
-        url: `/auth/login`,
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: [],
-    }),
-    GetProjectById: builder.query({
-        query: (reqData) => ({
-          url: `/dashbaord`,
+    GetDashboard: builder.query({
+        query: (authToken) => ({
+          url: `/dashboard`,
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${reqData.authToken}`,
+            Authorization: `Bearer ${authToken}`,
           },
         }),
       }),
@@ -23,5 +15,5 @@ export const dashboardSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useLoginUserMutation,useGetProjectByIdQuery
+  useGetDashboardQuery
 } = dashboardSlice;
