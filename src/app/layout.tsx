@@ -6,6 +6,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "@/store";
 
 
+
 export const metadata: Metadata = {
   title: "Rapid Code",
   description: "A rapid ideation tool",

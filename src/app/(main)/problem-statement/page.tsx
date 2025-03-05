@@ -9,6 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from '@/components/ui/EmptyState';
+import { useCreateProblemMutation, useGetProblemByProjectQuery } from '@/services/problemService';
+import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import useAuth from '@/hooks/useAuth';
+import useProject from '@/hooks/useProject';
 
 interface ProblemStatement {
   id: string;
@@ -44,6 +49,7 @@ const StatementForm = ({
   submitLabel: string
 }) => {
   const [formData, setFormData] = useState<FormData>(initialData);
+  
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -139,6 +145,22 @@ const ProblemStatementsPage = () => {
   const [problemStatements, setProblemStatements] = useState<ProblemStatement[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const router = useRouter();
+  const dispatch = useDispatch();
+    const authDetails = useAuth()
+    const projectDetails = useProject()
+    console.log("pro",projectDetails)
+
+
+
+    const { data } = useGetProblemByProjectQuery(
+      { projectId: projectDetails?._id, authToken: authDetails?.token },
+      { skip: !projectDetails?._id } // Skip query if projectId is null or undefined
+    );
+
+    console.log("lofff",data)
+    
+  const [CreateProblem,creatProblemProps] =useCreateProblemMutation()
 
   const handleAddStatement = (formData: FormData) => {
     const statement: ProblemStatement = {

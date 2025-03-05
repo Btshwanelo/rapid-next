@@ -2,20 +2,23 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const problemSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    LoginUser: builder.mutation({
-      query: (body) => ({
-        url: `/auth/login`,
+    CreateProblem: builder.mutation({
+      query: ({body,authToken}) => ({
+        url: `/problem-statements`,
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
         body,
       }),
       invalidatesTags: [],
     }),
-    GetProjectById: builder.query({
-        query: (reqData) => ({
-          url: `/dashbaord`,
+    GetProblemByProject: builder.query({
+        query: ({projectId,authToken}) => ({
+          url: `/problem-statements/project/${projectId}`,
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${reqData.authToken}`,
+            Authorization: `Bearer ${authToken}`,
           },
         }),
       }),
@@ -23,5 +26,5 @@ export const problemSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useLoginUserMutation,useGetProjectByIdQuery
+  useCreateProblemMutation,useGetProblemByProjectQuery
 } = problemSlice;

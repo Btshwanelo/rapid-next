@@ -14,14 +14,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useDispatch } from "react-redux";
+import { logout } from "@/slices/authSlice";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-    const {logout} = useAuth()
+    const dispatch = useDispatch()
   const router = useRouter();
 
   return (
@@ -83,8 +84,7 @@ export default function RootLayout({
                       className="hover:bg-white/10 text-red-400 cursor-pointer"
                       onClick={() => {
                         // Add your logout logic here
-                        console.log("Logging out...");
-                        logout()
+                        dispatch(logout())
                         router.push('/login');
                         // Example: router.push('/auth/login');
                       }}

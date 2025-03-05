@@ -2,10 +2,13 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const projectSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    LoginUser: builder.mutation({
-      query: (body) => ({
-        url: `/auth/login`,
+    CreateProject: builder.mutation({
+      query: ({body,authToken}) => ({
+        url: `/projects`,
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
         body,
       }),
       invalidatesTags: [],
@@ -23,5 +26,5 @@ export const projectSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useLoginUserMutation,useGetProjectByIdQuery
+  useCreateProjectMutation,useGetProjectByIdQuery
 } = projectSlice;

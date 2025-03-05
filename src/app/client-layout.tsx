@@ -5,6 +5,8 @@ import Image from "next/image";
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider } from "react-redux";
 import store, { persistor } from "@/store";
+import { Toaster } from "sonner";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +38,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
 
           {/* Main Content */}
-          <div className="relative z-0">{children}</div>
+          <div className="relative z-0">
+          <Toaster />
+            {children}</div>
           </PersistGate>
           </Provider>
       </body>

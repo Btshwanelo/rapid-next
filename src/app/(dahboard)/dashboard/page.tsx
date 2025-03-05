@@ -92,18 +92,18 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {/* <h2 className="text-xl font-semibold text-white">Projects</h2> */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {projects.map((project) => (
+          {dashboardData?.data?.data?.projects.map((project) => (
             <Card key={project.id} className="bg-[#0f0f43] border-none overflow-hidden group">
               <div className="relative aspect-video">
                 <img
-                  src={project.imageUrl}
+                  src={project.image}
                   alt={project.title}
                   className="object-cover w-full h-full"
                 />
               </div>
               <CardContent className="pt-4">
-                <p className="text-sm text-gray-400">{project.subtitle}</p>
-                <h3 className="text-lg font-semibold text-white mt-1">{project.title}</h3>
+                {/* <p className="text-sm text-gray-400">{project.name}</p> */}
+                <h3 className="text-lg font-semibold text-white mt-1">{project.name}</h3>
                 <p className="text-sm text-gray-400 mt-2">{project.description}</p>
                 <Link href={'/problem-statement'}>
                 <Button 
