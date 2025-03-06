@@ -6,6 +6,8 @@ import { ArrowRight, Plus, Copy } from "lucide-react";
 import Link from 'next/link';
 import { useGetDashboardQuery } from '@/services/dashboardService';
 import useAuth from '@/hooks/useAuth';
+import { useDispatch } from 'react-redux';
+import { setCurrentProject } from '@/slices/projectSlice';
 
 
 interface Project {
@@ -42,6 +44,8 @@ const projects: Project[] = [
 
 export default function DashboardPage() {
   const authDetails = useAuth()
+  const dispatch = useDispatch()
+
   const dashboardData=useGetDashboardQuery(authDetails.token)
   console.log('das',dashboardData.data)
   return (
@@ -107,7 +111,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-400 mt-2">{project.description}</p>
                 <Link href={'/problem-statement'}>
                 <Button 
-                  className="bg-blue-600 hover:bg-blue-700 w-full mt-4"
+                  className="bg-blue-600 hover:bg-blue-700 w-full mt-4" onClick={()=>dispatch(setCurrentProject(project)) }
                 >
                   VIEW
                 </Button>

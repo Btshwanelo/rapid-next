@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Save, X, FileText, Circle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from '@/components/ui/EmptyState';
-import { useCreateProblemMutation, useGetProblemByProjectQuery } from '@/services/problemService';
+import { useCreateProblemMutation, useGetProblemByProjectQuery, useLazyGetProblemByProjectQuery } from '@/services/problemService';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import useAuth from '@/hooks/useAuth';
@@ -149,18 +149,23 @@ const ProblemStatementsPage = () => {
   const dispatch = useDispatch();
     const authDetails = useAuth()
     const projectDetails = useProject()
-    console.log("pro",projectDetails)
 
 
 
-    const { data } = useGetProblemByProjectQuery(
-      { projectId: projectDetails?._id, authToken: authDetails?.token },
-      { skip: !projectDetails?._id } // Skip query if projectId is null or undefined
-    );
+    // const { data } = useGetProblemByProjectQuery(
+    //   { projectId: projectDetails?._id, authToken: authDetails?.token },
+    //   { skip: !projectDetails?._id } // Skip query if projectId is null or undefined
+    // );
+    const [GetProblemByProject,problemProps] = useLazyGetProblemByProjectQuery()
 
-    console.log("lofff",data)
+    console.log("lofff",problemProps)
     
   const [CreateProblem,creatProblemProps] =useCreateProblemMutation()
+
+  useEffect(() => {
+    GetProblemByProject({ projectId: projectDetails?._id, authToken: authDetails?.token })
+  }, [])
+  
 
   const handleAddStatement = (formData: FormData) => {
     const statement: ProblemStatement = {
@@ -168,7 +173,18 @@ const ProblemStatementsPage = () => {
       ...formData,
       createdAt: new Date(),
     };
-    setProblemStatements(prev => [...prev, statement]);
+    console.log("statement",statement)
+    CreateProblem({body:{
+      "userType": statement.userType,
+      "user": statement.userDescription,
+      "improve": statement.improvement,
+      "currentStruggle": statement.struggles,
+      "situation": statement.comparison,
+      "idealState": statement.idealState,
+      "benefit": statement.worldBenefit,
+      "projectId":projectDetails?._id
+    },authToken:authDetails.token})
+    // setProblemStatements(prev => [...prev, statement]);
     setShowAddDialog(false);
   };
 
@@ -217,7 +233,7 @@ const ProblemStatementsPage = () => {
           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
             <h3 className="font-semibold text-white  mr-2 ">Our user is</h3>
-            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.userDescription}</p>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.user}</p>
           </div>
         </div>
       </div>
@@ -227,7 +243,7 @@ const ProblemStatementsPage = () => {
           <div className='flex items-center'>
             <h3 className="font-semibold text-white  mr-2 ">We will improve his or her
             </h3>
-            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.improvement}</p>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.improve}</p>
           </div>
         </div>
       </div>
@@ -237,7 +253,7 @@ const ProblemStatementsPage = () => {
           <div className='flex items-center'>
             <h3 className="font-semibold text-white  mr-2 ">Currently this user struggles because
             </h3>
-            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.struggles}</p>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.currentStruggle}</p>
           </div>
         </div>
       </div>
@@ -246,7 +262,7 @@ const ProblemStatementsPage = () => {
            <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
             <h3 className="font-semibold text-white  mr-2 ">It's kinda like</h3>
-            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.comparison}</p>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.situation}</p>
           </div>
         </div>
       </div>
@@ -265,7 +281,7 @@ const ProblemStatementsPage = () => {
            <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
           <div className='flex items-center'>
             <h3 className="font-semibold text-white  mr-2 ">This would be great for the world because            </h3>
-            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.worldBenefit}</p>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.benefit}</p>
           </div>
         </div>
       </div>
@@ -313,13 +329,11 @@ const ProblemStatementsPage = () => {
         </Dialog>
       </div>
 
-      {problemStatements.length === 0 ? (
+      {problemProps?.data?.data?.length === 0 ? (
        <EmptyState />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {problemStatements
-            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-            .map(renderProblemStatement)}
+          {problemProps?.data?.data?.map(renderProblemStatement)}
         </div>
       )}
 

@@ -11,7 +11,7 @@ export const problemSlice = apiSlice.injectEndpoints({
         },
         body,
       }),
-      invalidatesTags: [],
+      invalidatesTags: ['problem'],
     }),
     GetProblemByProject: builder.query({
         query: ({projectId,authToken}) => ({
@@ -21,10 +21,11 @@ export const problemSlice = apiSlice.injectEndpoints({
             Authorization: `Bearer ${authToken}`,
           },
         }),
+        providesTags:['problem']
       }),
   }),
 });
 
 export const {
-  useCreateProblemMutation,useGetProblemByProjectQuery
+  useCreateProblemMutation,useGetProblemByProjectQuery,useLazyGetProblemByProjectQuery
 } = problemSlice;
