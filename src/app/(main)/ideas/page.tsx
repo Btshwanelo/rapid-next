@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
 import Link from 'next/link';
+import { useCreateIdeaMutation, useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation } from '@/services/ideaService';
 
 interface Idea {
   id: string;
@@ -63,6 +64,10 @@ const IdeasPage = () => {
     description: '',
     category: ''
   });
+  const [CreateIdea,creatIdeaProps] = useCreateIdeaMutation()
+  const [UpdateIdea,updateIdeaProps] = useUpdateIdeaMutation()
+  const [GetIdeas,getIdeasProps] = useLazyGetIdeasByProjectQuery()
+
 
   const handleAddIdea = (idea: Partial<Idea>) => {
     const newIdea: Idea = {

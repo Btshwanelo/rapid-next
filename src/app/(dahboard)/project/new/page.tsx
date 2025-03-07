@@ -26,7 +26,7 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export default function CreateProject() {
-  const [createProject, { isLoading, isSuccess, isError, error, data }] = useCreateProjectMutation();
+  const [CreateProject, { isLoading, isSuccess, isError, error, data }] = useCreateProjectMutation();
   const router = useRouter();
   const dispatch = useDispatch();
     const authDetails = useAuth()
@@ -44,7 +44,7 @@ export default function CreateProject() {
   // Handle form submission
   const onSubmit = async (values: ProjectFormValues) => {
     try {
-      await createProject({body:{
+      await CreateProject({body:{
         name: values.name,
         description: values.description || "",
         projectType:"design",

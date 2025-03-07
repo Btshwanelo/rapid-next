@@ -18,36 +18,12 @@ interface Project {
   imageUrl: string;
 }
 
-const projects: Project[] = [
-  {
-    id: 1,
-    title: 'Lifebook',
-    subtitle: 'Project 1',
-    description: 'A solution to give everyone a strategy for their lives',
-    imageUrl: 'https://placehold.co/600x400.png'
-  },
-  {
-    id: 2,
-    title: 'Coffee Shop App',
-    subtitle: 'Project 2',
-    description: 'Coffee shop app used by coffee shops as a way to collect orders from customers.',
-    imageUrl: 'https://placehold.co/600x400.png'
-  },
-  {
-    id: 3,
-    title: 'Richard Test',
-    subtitle: 'Project 3',
-    description: 'Credit application',
-    imageUrl: 'https://placehold.co/600x400.png'
-  }
-];
 
 export default function DashboardPage() {
   const authDetails = useAuth()
   const dispatch = useDispatch()
+  const dashboardData = useGetDashboardQuery(authDetails.token)
 
-  const dashboardData=useGetDashboardQuery(authDetails.token)
-  console.log('das',dashboardData.data)
   return (
     <div className="space-y-8">
       {/* Header */}

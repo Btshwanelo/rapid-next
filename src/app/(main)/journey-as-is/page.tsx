@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useInitilizeJourneyMutation, useLazyGetJourneyAsIsByProjectIdQuery, useUpdateJourneyAsIsMutation } from '@/services/journeyService';
 
 interface JourneyCard {
   id: string;
@@ -42,6 +43,10 @@ export default function JourneyMapPage() {
   const [selectedType, setSelectedType] = useState<'doing' | 'thinking' | 'feeling'>('doing');
   const [newCardContent, setNewCardContent] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [InitilizeJourney,initJourneyProps] = useInitilizeJourneyMutation()
+  const [UpdateJourney,updateJourneyProps] = useUpdateJourneyAsIsMutation()
+  const [GetJourneyByProject,getJourneyProps] = useLazyGetJourneyAsIsByProjectIdQuery()
 
   const handleAddCard = () => {
     if (!newCardContent.trim()) return;
@@ -81,7 +86,7 @@ export default function JourneyMapPage() {
   return (
     <div className="space-y-4 p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Journey Map As Is</h1>
           <p className="text-gray-400 mt-2">Map out the user journey phases</p>
@@ -109,7 +114,7 @@ export default function JourneyMapPage() {
       </div>
 
       {/* Journey Map Grid */}
-      <div className="overflow-x-auto">
+      <div className="">
         <div className="">
           {/* Phase Headers */}
           <div className="grid grid-cols-6 gap-4 mb-4">
@@ -125,7 +130,7 @@ export default function JourneyMapPage() {
             <h4 className="text-white font-medium mb-4">Doing</h4>
             <div className="grid grid-cols-6 gap-4">
               {phases.map((phase, phaseIndex) => (
-                <div key={`doing-${phase.id}`} className="w-64 space-y-2">
+                <div key={`doing-${phase.id}`} className="min-w-10 space-y-2">
                   {cards
                     .filter(card => card.phaseIndex === phaseIndex && card.type === 'doing')
                     .map(card => (
@@ -146,7 +151,7 @@ export default function JourneyMapPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
-                      className="w-full text-white border border-dashed border-gray-600 hover:border-blue-500"
+                      className=" text-white border border-dashed border-gray-600 hover:border-blue-500"
                       onClick={() => {
                         setSelectedPhase(phaseIndex);
                         setSelectedType('doing');
@@ -156,14 +161,14 @@ export default function JourneyMapPage() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Card
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       className="border text-white border-dashed border-gray-600 hover:border-blue-500"
                       onClick={() => handleGenerateAI(phaseIndex, 'doing')}
                       disabled={loading}
                     >
                       <Brain className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ))}
@@ -175,7 +180,7 @@ export default function JourneyMapPage() {
             <h4 className="text-white font-medium mb-4">Thinking</h4>
             <div className="grid grid-cols-6 gap-4">
               {phases.map((phase, phaseIndex) => (
-                <div key={`thinking-${phase.id}`} className="w-64 space-y-2">
+                <div key={`thinking-${phase.id}`} className="min-w-10 space-y-2">
                   {cards
                     .filter(card => card.phaseIndex === phaseIndex && card.type === 'thinking')
                     .map(card => (
@@ -196,7 +201,7 @@ export default function JourneyMapPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
-                      className="w-full text-white border border-dashed border-gray-600 hover:border-blue-500"
+                      className=" text-white border border-dashed border-gray-600 hover:border-blue-500"
                       onClick={() => {
                         setSelectedPhase(phaseIndex);
                         setSelectedType('thinking');
@@ -206,14 +211,14 @@ export default function JourneyMapPage() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Card
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       className="border text-white border-dashed border-gray-600 hover:border-blue-500"
                       onClick={() => handleGenerateAI(phaseIndex, 'thinking')}
                       disabled={loading}
                     >
                       <Brain className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ))}
@@ -225,7 +230,7 @@ export default function JourneyMapPage() {
             <h4 className="text-white font-medium mb-4">Feeling</h4>
             <div className="grid grid-cols-6 gap-4">
               {phases.map((phase, phaseIndex) => (
-                <div key={`feeling-${phase.id}`} className="w-64 space-y-2">
+                <div key={`feeling-${phase.id}`} className="min-w-10 space-y-2">
                   {cards
                     .filter(card => card.phaseIndex === phaseIndex && card.type === 'feeling')
                     .map(card => (
@@ -246,7 +251,7 @@ export default function JourneyMapPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
-                      className="w-full text-white border border-dashed border-gray-600 hover:border-blue-500"
+                      className=" text-white border border-dashed border-gray-600 hover:border-blue-500"
                       onClick={() => {
                         setSelectedPhase(phaseIndex);
                         setSelectedType('feeling');
@@ -256,14 +261,14 @@ export default function JourneyMapPage() {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Card
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       className="border text-white border-dashed border-gray-600 hover:border-blue-500"
                       onClick={() => handleGenerateAI(phaseIndex, 'feeling')}
                       disabled={loading}
                     >
                       <Brain className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ))}

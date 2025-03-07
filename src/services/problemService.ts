@@ -13,6 +13,28 @@ export const problemSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['problem'],
     }),
+    UpdateProblem: builder.mutation({
+      query: ({body,authToken,id}) => ({
+        url: `/problem-statements/${id}`,
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body,
+      }),
+      invalidatesTags: ['problem'],
+    }),
+    DeleteProblem: builder.mutation({
+      query: ({body,authToken,id}) => ({
+        url: `/problem-statements/${id}`,
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body,
+      }),
+      invalidatesTags: ['problem'],
+    }),
     GetProblemByProject: builder.query({
         query: ({projectId,authToken}) => ({
           url: `/problem-statements/project/${projectId}`,
@@ -27,5 +49,8 @@ export const problemSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useCreateProblemMutation,useGetProblemByProjectQuery,useLazyGetProblemByProjectQuery
+  useCreateProblemMutation,
+  useLazyGetProblemByProjectQuery,
+  useUpdateProblemMutation,
+  useDeleteProblemMutation
 } = problemSlice;

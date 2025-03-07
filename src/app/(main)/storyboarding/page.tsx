@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
+import { useCreateStoryMutation, useDeleteStoryMutation, useLazyGetStoriesByProjectQuery, useUpdateStoryFrameMutation, useUpdateStoryMutation } from '@/services/storyboardService';
 
 interface Frame {
   id: string;
@@ -46,6 +47,13 @@ const StoryboardPage = () => {
     description: '',
   });
 
+  //Queries
+  const [CreateStory,createStoryProps] = useCreateStoryMutation()
+  const [UpdateStoryFrame,storyFrameProps] = useUpdateStoryFrameMutation()
+  const [UpdateStory,updateStoryProps] = useUpdateStoryMutation()
+  const [GetStory,getStoryProps] = useLazyGetStoriesByProjectQuery()
+  const [DeleteStory,deleteStoryProps] = useDeleteStoryMutation()
+
   const handleAddStoryboard = () => {
     if (newStoryboard.userType) {
       const emptyFrames: Frame[] = Array(FRAME_COUNT).fill(null).map(() => ({
@@ -60,6 +68,7 @@ const StoryboardPage = () => {
         frames: emptyFrames,
       };
 
+      CreateStory({})
       setStoryboards([...storyboards, newStoryboardObj]);
       setSelectedStoryboard(newStoryboardObj.id);
       setNewStoryboard({ userType: '', description: '' });

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
+import { useCreateNeedMutation, useLazyGetNeedsByProjectQuery } from '@/services/needService';
 
 interface NeedsStatement {
   id: string;
@@ -52,6 +53,9 @@ const NeedsStatementForm = ({
     priority: initialData.priority || 'medium',
     category: initialData.category || '',
   });
+
+  const [CreateNeed,createNeedProps] = useCreateNeedMutation()
+  const [GetNeedByProject,getNeedProps] = useLazyGetNeedsByProjectQuery()
 
   return (
     <div className="space-y-4">

@@ -2,20 +2,29 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const needSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    LoginUser: builder.mutation({
+    CreateNeed: builder.mutation({
       query: (body) => ({
-        url: `/auth/login`,
+        url: `/needs`,
         method: 'POST',
         body,
       }),
       invalidatesTags: [],
     }),
-    GetProjectById: builder.query({
-        query: (reqData) => ({
-          url: `/dashbaord`,
+    GetNeedsByProject: builder.query({
+        query: ({id,authToken}) => ({
+          url: `/needs/project/${id}`,
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${reqData.authToken}`,
+            Authorization: `Bearer ${authToken}`,
+          },
+        }),
+      }),
+    GetNeedsByUser: builder.query({
+        query: ({id,authToken}) => ({
+          url: `/needs/user/${id}`,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
           },
         }),
       }),
@@ -23,5 +32,6 @@ export const needSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useLoginUserMutation,useGetProjectByIdQuery
-} = needSlice;
+  useCreateNeedMutation,
+  useLazyGetNeedsByProjectQuery,
+  useLazyGetNeedsByUserQuery} = needSlice;

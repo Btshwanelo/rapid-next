@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useUpdateIdeaMutation } from '@/services/ideaService';
 
 interface Idea {
   id: string;
@@ -48,6 +49,9 @@ const IdeaGroupsPage = () => {
     description: '',
     color: GROUP_COLORS[0]
   });
+
+  const [UpdateIdea,updateIdeaProps] = useUpdateIdeaMutation()
+  
 
   const handleAddGroup = () => {
     if (newGroup.name) {

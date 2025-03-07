@@ -2,17 +2,34 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const ideaSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    LoginUser: builder.mutation({
+    CreateIdea: builder.mutation({
       query: (body) => ({
-        url: `/auth/login`,
+        url: `/ideas`,
         method: 'POST',
         body,
       }),
       invalidatesTags: [],
     }),
-    GetProjectById: builder.query({
-        query: (reqData) => ({
-          url: `/dashbaord`,
+    UpdateIdea: builder.mutation({
+      query: ({body,id}) => ({
+        url: `/ideas/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: [],
+    }),
+    GetIdeasByProject: builder.query({
+        query: ({reqData,id}) => ({
+          url: `/ideas/project/${id}`,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${reqData.authToken}`,
+          },
+        }),
+      }),
+    GetIdeaById: builder.query({
+        query: ({reqData,id}) => ({
+          url: `/ideas/${id}`,
           method: 'GET',
           headers: {
             Authorization: `Bearer ${reqData.authToken}`,
@@ -23,5 +40,7 @@ export const ideaSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useLoginUserMutation,useGetProjectByIdQuery
-} = ideaSlice;
+useCreateIdeaMutation,
+useLazyGetIdeaByIdQuery,
+useLazyGetIdeasByProjectQuery,
+useUpdateIdeaMutation} = ideaSlice;

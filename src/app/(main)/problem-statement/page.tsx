@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from '@/components/ui/EmptyState';
-import { useCreateProblemMutation, useGetProblemByProjectQuery, useLazyGetProblemByProjectQuery } from '@/services/problemService';
+import { useCreateProblemMutation, useDeleteProblemMutation, useGetProblemByProjectQuery, useLazyGetProblemByProjectQuery, useUpdateProblemMutation } from '@/services/problemService';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import useAuth from '@/hooks/useAuth';
@@ -147,20 +147,13 @@ const ProblemStatementsPage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
-    const authDetails = useAuth()
-    const projectDetails = useProject()
+  const authDetails = useAuth()
+  const projectDetails = useProject()
 
-
-
-    // const { data } = useGetProblemByProjectQuery(
-    //   { projectId: projectDetails?._id, authToken: authDetails?.token },
-    //   { skip: !projectDetails?._id } // Skip query if projectId is null or undefined
-    // );
-    const [GetProblemByProject,problemProps] = useLazyGetProblemByProjectQuery()
-
-    console.log("lofff",problemProps)
-    
+  const [GetProblemByProject,problemProps] = useLazyGetProblemByProjectQuery()
   const [CreateProblem,creatProblemProps] =useCreateProblemMutation()
+  const [DeleteProblem, deleteProblemProps] =useDeleteProblemMutation()
+  const [UpdateProblem, updateProblemProps] =useUpdateProblemMutation()
 
   useEffect(() => {
     GetProblemByProject({ projectId: projectDetails?._id, authToken: authDetails?.token })
@@ -184,7 +177,6 @@ const ProblemStatementsPage = () => {
       "benefit": statement.worldBenefit,
       "projectId":projectDetails?._id
     },authToken:authDetails.token})
-    // setProblemStatements(prev => [...prev, statement]);
     setShowAddDialog(false);
   };
 

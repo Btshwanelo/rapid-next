@@ -2,17 +2,41 @@ import { apiSlice } from '../slices/apiSlice';
 
 export const storyboardSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    LoginUser: builder.mutation({
+    CreateStory: builder.mutation({
       query: (body) => ({
-        url: `/auth/login`,
+        url: `/storyboards`,
         method: 'POST',
         body,
       }),
       invalidatesTags: [],
     }),
-    GetProjectById: builder.query({
+    UpdateStory: builder.mutation({
+      query: ({body,id}) => ({
+        url: `/storyboards/${id}`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [],
+    }),
+    DeleteStory: builder.mutation({
+      query: ({body,id}) => ({
+        url: `/storyboards/${id}`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [],
+    }),
+    UpdateStoryFrame: builder.mutation({
+      query: ({body,frameId,frameIndx}) => ({
+        url: `/storyboards/${frameId}/frames/${frameIndx}`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [],
+    }),
+    GetStoriesByProject: builder.query({
         query: (reqData) => ({
-          url: `/dashbaord`,
+          url: `/storyboards`,
           method: 'GET',
           headers: {
             Authorization: `Bearer ${reqData.authToken}`,
@@ -20,8 +44,12 @@ export const storyboardSlice = apiSlice.injectEndpoints({
         }),
       }),
   }),
-});
+}); 
 
 export const {
-  useLoginUserMutation,useGetProjectByIdQuery
+  useCreateStoryMutation,
+  useUpdateStoryFrameMutation,
+  useDeleteStoryMutation,
+  useUpdateStoryMutation,
+  useLazyGetStoriesByProjectQuery
 } = storyboardSlice;
