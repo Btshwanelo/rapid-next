@@ -84,7 +84,7 @@ export default function CreateProject() {
             {isError && (
               <Alert variant="destructive">
                 <AlertDescription>
-                  {error?.data?.message || "An error occurred while creating your project."}
+                  An error occurred while creating your project.
                 </AlertDescription>
               </Alert>
             )}

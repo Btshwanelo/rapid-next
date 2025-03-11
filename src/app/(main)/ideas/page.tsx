@@ -17,7 +17,7 @@ import useProject from '@/hooks/useProject';
 import useAuth from '@/hooks/useAuth';
 
 interface Idea {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   methodology?: string;
@@ -88,7 +88,7 @@ const IdeasPage = () => {
 
   const handleEditIdea = (updatedIdea: Idea) => {
     
-    UpdateIdea({id:updatedIdea._id,authToken:authDeatils.token,body:{title:updatedIdea.title,description:updatedIdea.description}})
+    UpdateIdea({id:updatedIdea?._id,authToken:authDeatils.token,body:{title:updatedIdea.title,description:updatedIdea.description}})
     setEditingIdea(null);
   };
 
@@ -103,13 +103,13 @@ const IdeasPage = () => {
 
   const handleRejectIdea = (id: string) => {
     setIdeas(ideas.map(idea =>
-      idea.id === id ? { ...idea, status: 'rejected' } : idea
+      idea._id === id ? { ...idea, status: 'rejected' } : idea
     ));
   };
 
   const handleKeepIdea = (id: string) => {
     setIdeas(ideas.map(idea =>
-      idea.id === id ? { ...idea, status: 'active' } : idea
+      idea._id === id ? { ...idea, status: 'active' } : idea
     ));
   };
 
@@ -255,7 +255,7 @@ const IdeasPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {getIdeasProps?.data?.data
-            .filter(idea => {
+            .filter((idea:any) => {
               switch (activeTab) {
                 case 'ai':
                   return idea.isAiGenerated;

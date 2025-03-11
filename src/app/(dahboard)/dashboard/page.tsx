@@ -72,7 +72,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {/* <h2 className="text-xl font-semibold text-white">Projects</h2> */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dashboardData?.data?.data?.projects.map((project) => (
+          {dashboardData?.data?.data?.projects.map((project:any) => (
             <Card key={project.id} className="bg-[#0f0f43] border-none overflow-hidden group">
               <div className="relative aspect-video">
                 <img

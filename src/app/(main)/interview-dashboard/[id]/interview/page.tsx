@@ -166,7 +166,7 @@ export default function InterviewPage() {
 
                 
                   <div className="space-y-6">
-                    {getPersonaProps?.data?.data?.interviewQuestions?.map((question, index) => (
+                    {getPersonaProps?.data?.data?.interviewQuestions?.map((question:any, index:any) => (
                       <div key={index} className="space-y-2">
                         <p className="text-white font-medium">{question.question}</p>
                         <Textarea
@@ -205,7 +205,7 @@ export default function InterviewPage() {
                     </div>
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white">Interview Responses:</h3>
-                      {getPersonaProps?.data?.data?.interviewQuestions?.map((question, index) => (
+                      {getPersonaProps?.data?.data?.interviewQuestions?.map((question:any, index:any) => (
                         <div key={index} className="bg-[#1a1a4a] p-4 rounded-lg">
                           <p className="text-white font-medium">{question.question}</p>
                           <p className="text-white mt-2">{question.answer}</p>
@@ -228,7 +228,7 @@ export default function InterviewPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {getPersonaProps?.data?.data?.nextSteps.map((step, index) => (
+                    {getPersonaProps?.data?.data?.nextSteps.map((step:any, index:any) => (
                       <div key={index} className="flex items-start gap-3 bg-[#1a1a4a] p-4 rounded-lg">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
                           <span className="text-blue-400 font-medium">{index + 1}</span>

@@ -31,7 +31,7 @@ interface InterviewData {
 
 export default function InterviewAnalysis() {
   const [activeTab, setActiveTab] = useState<string>('all-segments');
-  const [segments, setSegments] = useState<string[]>(['All Segments']);
+  const [segments, setSegments] = useState<any>(['All Segments']);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [interviewData, setInterviewData] = useState<InterviewData[]>([]);
@@ -65,7 +65,7 @@ console.log("121w3e2",interviewData)
       
       // Extract unique segment titles to use as tabs
       if (data.length > 0) {
-        const uniqueSegments = [...new Set(data.map(item => item.title))];
+        const uniqueSegments = [...new Set(data.map((item:any) => item.title))];
         setSegments(uniqueSegments);
       }
     }
@@ -171,7 +171,7 @@ console.log("121w3e2",interviewData)
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="p-1 space-x-2 bg-[#0f0f43]">
-            {segments.map((segment) => (
+            {segments.map((segment:any) => (
               <TabsTrigger
                 key={segment}
                 value={segment.toLowerCase().replace(/\s+/g, '-')}

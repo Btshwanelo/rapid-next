@@ -277,7 +277,7 @@ const EmpathyMap = () => {
               <SelectValue placeholder="Select persona"  />
             </SelectTrigger>
             <SelectContent>
-              {getPersonasProps?.data?.data.map(persona => (
+              {getPersonasProps?.data?.data.map((persona:any) => (
                 <SelectItem 
                   key={persona._id} 
                   value={persona._id}
