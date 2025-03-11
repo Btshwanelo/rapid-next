@@ -1,27 +1,22 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, FileText, Circle, User2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, FileText, Circle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from '@/components/ui/EmptyState';
-import { 
-  useCreateProblemMutation, 
-  useDeleteProblemMutation, 
-  useLazyGetProblemByProjectQuery, 
-  useUpdateProblemMutation 
-} from '@/services/problemService';
+import { useCreateProblemMutation, useDeleteProblemMutation, useGetProblemByProjectQuery, useLazyGetProblemByProjectQuery, useUpdateProblemMutation } from '@/services/problemService';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import useAuth from '@/hooks/useAuth';
 import useProject from '@/hooks/useProject';
-import Link from 'next/link';
 
 interface ProblemStatement {
-  _id: string;
+  id: string;
   userType: string;
   user: string;
   improve: string;
@@ -32,7 +27,7 @@ interface ProblemStatement {
   createdAt: Date;
 }
 
-interface FormData extends Omit<ProblemStatement, '_id' | 'createdAt'> {}
+interface FormData extends Omit<ProblemStatement, 'id' | 'createdAt'> {}
 
 const EMPTY_FORM_DATA: FormData = {
   userType: '',
@@ -55,10 +50,6 @@ const StatementForm = ({
 }) => {
   const [formData, setFormData] = useState<FormData>(initialData);
   
-  // Update form when initialData changes (for edit mode)
-  useEffect(() => {
-    setFormData(initialData);
-  }, [initialData]);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -100,9 +91,9 @@ const StatementForm = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Currently this user struggles because</label>
+        <label className="text-sm font-medium">Currently this user currentStruggle because</label>
         <Textarea
-          placeholder="Current struggle"
+          placeholder="Current currentStruggle"
           value={formData.currentStruggle}
           onChange={e => handleChange('currentStruggle', e.target.value)}
           className="h-20"
@@ -151,87 +142,79 @@ const StatementForm = ({
 };
 
 const ProblemStatementsPage = () => {
+  const [problemStatements, setProblemStatements] = useState<ProblemStatement[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
-  const authDetails = useAuth();
-  const projectDetails = useProject();
-  
-  // API hooks
-  const [getProblemByProject, problemProps] = useLazyGetProblemByProjectQuery();
-  const [createProblem, createProblemProps] = useCreateProblemMutation();
-  const [deleteProblem, deleteProblemProps] = useDeleteProblemMutation();
-  const [updateProblem, updateProblemProps] = useUpdateProblemMutation();
+  const authDetails = useAuth()
+  const projectDetails = useProject()
 
-  // Fetch problems on component mount
+  const [GetProblemByProject,problemProps] = useLazyGetProblemByProjectQuery()
+  const [CreateProblem,creatProblemProps] =useCreateProblemMutation()
+  const [DeleteProblem, deleteProblemProps] =useDeleteProblemMutation()
+  const [UpdateProblem, updateProblemProps] =useUpdateProblemMutation()
+
   useEffect(() => {
-    if (projectDetails?._id && authDetails?.token) {
-      getProblemByProject({ 
-        projectId: projectDetails._id, 
-        authToken: authDetails.token 
-      });
-    }
-  }, [projectDetails, authDetails, getProblemByProject]);
+    GetProblemByProject({ projectId: projectDetails?._id, authToken: authDetails?.token })
+  }, [])
+  
 
   const handleAddStatement = (formData: FormData) => {
-    if (!projectDetails?._id || !authDetails?.token) return;
-    
-    createProblem({
-      body: {
-        ...formData,
-        projectId: projectDetails._id
-      },
-      authToken: authDetails.token
-    });
-    
+    const statement: ProblemStatement = {
+      id: Date.now().toString(),
+      ...formData,
+      createdAt: new Date(),
+    };
+    console.log("statement",statement)
+    CreateProblem({body:{
+      "userType": statement.userType,
+      "user": statement.user,
+      "improve": statement.improve,
+      "currentStruggle": statement.currentStruggle,
+      "situation": statement.situation,
+      "idealState": statement.idealState,
+      "benefit": statement.benefit,
+      "projectId":projectDetails?._id
+    },authToken:authDetails.token})
     setShowAddDialog(false);
   };
 
   const handleEditStatement = (formData: FormData) => {
-    if (!editingId || !projectDetails?._id || !authDetails?.token) return;
+    if (!editingId) return;
+
+    UpdateProblem({body:{
+      "userType": statement.userType,
+      "user": statement.user,
+      "improve": statement.improve,
+      "currentStruggle": statement.currentStruggle,
+      "situation": statement.situation,
+      "idealState": statement.idealState,
+      "benefit": statement.benefit,
+      "projectId":projectDetails?._id
+    },authToken:authDetails.token,id:editingId})
     
-    updateProblem({
-      body: {
-        ...formData,
-        projectId: projectDetails._id
-      },
-      authToken: authDetails.token,
-      id: editingId
-    });
-    
-    setEditingId(null);
+    // setProblemStatements(statements =>
+    //   statements.map(statement =>
+    //     statement.id === editingId
+    //       ? { ...statement, ...formData }
+    //       : statement
+    //   )
+    // );
+    // setEditingId(null);
   };
 
   const handleDeleteStatement = (id: string) => {
-    if (!authDetails?.token) return;
-    
-    deleteProblem({
-      authToken: authDetails.token,
-      id
-    });
+    DeleteProblem({authToken:authDetails.token,id})
   };
 
-  const getEditingStatement = (): FormData | null => {
-    if (!editingId || !problemProps?.data?.data) return null;
-    
-    const statement = problemProps.data.data.find(s => s._id === editingId);
-    
-    if (!statement) return null;
-    
-    return {
-      userType: statement.userType,
-      user: statement.user,
-      improve: statement.improve,
-      currentStruggle: statement.currentStruggle,
-      situation: statement.situation,
-      idealState: statement.idealState,
-      benefit: statement.benefit,
-    };
+  const getEditingStatement = () => {
+    if (!editingId) return null;
+    return problemStatements.find(s => s.id === editingId);
   };
 
   const renderProblemStatement = (statement: ProblemStatement) => (
-    <Card key={statement._id} className="w-full bg-[#0f0f43] text-white border-none">
+    <Card key={statement.id} className="w-full bg-[#0f0f43] text-white border-none">
       <CardHeader className="p-4">
         <CardTitle className="text-lg text-white flex items-center justify-between">
           <span className="flex items-center gap-2 text-white">
@@ -244,73 +227,68 @@ const ProblemStatementsPage = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 gap-2">
-          {/* Our user is section */}
-          <div className="col-span-2 p-2 align-middle justify-center">
-            <div className="flex gap-3 align-middle items-center">
-              <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
-              <div className='flex items-center'>
-                <h3 className="font-semibold text-white mr-2">Our user is</h3>
-                <p className="text-gray-300 bg-blue-500/10 p-2 rounded-lg">{statement.user}</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-2 p-2 align-middle justify-center">
-            <div className="flex gap-3 align-middle items-center">
-              <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
-              <div className='flex items-center'>
-                <h3 className="font-semibold text-white mr-2">We will improve his or her</h3>
-                <p className="text-gray-300 bg-blue-500/10 p-2 rounded-lg">{statement.improve}</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-2 p-2 align-middle justify-center">
-            <div className="flex gap-3 align-middle items-center">
-              <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
-              <div className='flex items-center'>
-                <h3 className="font-semibold text-white mr-2">Currently this user struggles because</h3>
-                <p className="text-gray-300 bg-blue-500/10 p-2 rounded-lg">{statement.currentStruggle}</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-2 p-2 align-middle justify-center">
-            <div className="flex gap-3 align-middle items-center">
-              <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
-              <div className='flex items-center'>
-                <h3 className="font-semibold text-white mr-2">It's kinda like</h3>
-                <p className=" text-gray-300 bg-blue-500/10 p-2 rounded-lg">{statement.situation}</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-2 p-2 align-middle justify-center">
-            <div className="flex gap-3 align-middle items-center">
-              <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
-              <div className='flex items-center'>
-                <h3 className="font-semibold text-white mr-2">In a perfect world, he or she would be able to</h3>
-                <p className="text-gray-300 bg-blue-500/10 p-2 rounded-lg">{statement.idealState}</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-2 p-2 align-middle justify-center">
-            <div className="flex gap-3 align-middle items-center">
-              <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
-              <div className='flex items-center'>
-                <h3 className="font-semibold text-white mr-2">This would be great for the world because</h3>
-                <p className="text-gray-300 bg-blue-500/10 p-2 rounded-lg">{statement.benefit}</p>
-              </div>
-            </div>
+    <div className="grid grid-cols-2 gap-2">
+      {/* Our user is section - Highlighted */}
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+          <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
+          <div className='flex items-center'>
+            <h3 className="font-semibold text-white  mr-2 ">Our user is</h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.user}</p>
           </div>
         </div>
-      </CardContent>
+      </div>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+          <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
+          <div className='flex items-center'>
+            <h3 className="font-semibold text-white  mr-2 ">We will improve his or her
+            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.improve}</p>
+          </div>
+        </div>
+      </div>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
+          <div className='flex items-center'>
+            <h3 className="font-semibold text-white  mr-2 ">Currently this user currentStruggle because
+            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.currentStruggle}</p>
+          </div>
+        </div>
+      </div>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
+          <div className='flex items-center'>
+            <h3 className="font-semibold text-white  mr-2 ">It's kinda like</h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.situation}</p>
+          </div>
+        </div>
+      </div>
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
+          <div className='flex items-center'>
+            <h3 className="font-semibold text-white  mr-2 ">In a perfect world, he or she would be able to            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.idealState}</p>
+          </div>
+        </div>
+      </div>
+     
+      <div className="col-span-2  p-2 align-middle justify-center">
+        <div className="flex  gap-3 align-middle items-center">
+           <Circle className='text-primary w-3 h-3 rounded-full' strokeWidth={7} />
+          <div className='flex items-center'>
+            <h3 className="font-semibold text-white  mr-2 ">This would be great for the world because            </h3>
+            <p className="text-sm text-gray-600 bg-white p-2 rounded-xl">{statement.benefit}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </CardContent>
       <CardFooter className="p-4 flex justify-end gap-2">
-        <Link href={`/problem-statement/${statement._id}/clarifying-questions`}>
-        <Button
-          variant="ghost"
-          size="sm"
-        >
-          <User2 className="w-4 h-4 mr-1" /> Clarifying questions
-        </Button>
-        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -335,7 +313,7 @@ const ProblemStatementsPage = () => {
         <h1 className="text-2xl font-bold text-white">Problem Statements</h1>
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
-            <Button className='font-medium'>
+            <Button className='font-medium '>
               <Plus className="w-4 h-4 mr-2" /> New Problem Statement
             </Button>
           </DialogTrigger>
@@ -352,11 +330,11 @@ const ProblemStatementsPage = () => {
         </Dialog>
       </div>
 
-      {!problemProps?.data?.data || problemProps.data.data.length === 0 ? (
-        <EmptyState />
+      {problemProps?.data?.data?.length === 0 ? (
+       <EmptyState />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {problemProps.data.data.map(renderProblemStatement)}
+          {problemProps?.data?.data?.map(renderProblemStatement)}
         </div>
       )}
 

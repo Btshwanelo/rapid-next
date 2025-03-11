@@ -57,7 +57,7 @@ export default function SegmentSelection() {
 
   return (
     <div className="flex  items-start justify-center bg-none  ">
-      <div className="w-full  bg-[#0f0f43] rounded-xl p-8 shadow-xl">
+      <div className="p-6">
         <h1 className="text-2xl font-bold text-center mb-2 text-white">Who do you want to interview?</h1>
         <p className="text-gray-300 text-center mb-8">Select 2-3 segments that best match your research needs</p>
 
@@ -130,7 +130,7 @@ export default function SegmentSelection() {
         )}
 
         <div className="flex justify-end">
-          <Link href={'/personas'} >
+          <Link href={'/interview-segments/personas'} >
           <Button
             className="bg-blue-500 hover:bg-blue-600 text-white px-6"
             disabled={selectedCount < 1}

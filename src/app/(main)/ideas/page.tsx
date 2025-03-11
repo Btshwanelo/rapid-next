@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Save, X, Lightbulb, ThumbsUp, ThumbsDown, Sparkles, Eye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
 import Link from 'next/link';
-import { useCreateIdeaMutation, useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation } from '@/services/ideaService';
+import { useCreateIdeaMutation, useDeleteIdeaMutation, useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation } from '@/services/ideaService';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
 
 interface Idea {
   id: string;
@@ -53,48 +55,50 @@ const IdeasPage = () => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [selectedMethodology, setSelectedMethodology] = useState<string>('');
-  const [generationPrompt, setGenerationPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
   const [generatedIdeas, setGeneratedIdeas] = useState<Idea[]>([]);
   const [activeTab, setActiveTab] = useState('all');
   const [newIdeaData, setNewIdeaData] = useState({
     title: '',
     description: '',
-    category: ''
   });
+
+  const projectDeatils = useProject()
+  const authDeatils = useAuth()
+
   const [CreateIdea,creatIdeaProps] = useCreateIdeaMutation()
   const [UpdateIdea,updateIdeaProps] = useUpdateIdeaMutation()
+  const [DeleteIdea,deleteIdeaProps] = useDeleteIdeaMutation()
   const [GetIdeas,getIdeasProps] = useLazyGetIdeasByProjectQuery()
 
 
   const handleAddIdea = (idea: Partial<Idea>) => {
-    const newIdea: Idea = {
-      id: Date.now().toString(),
-      title: idea.title || '',
-      description: idea.description || '',
-      methodology: idea.methodology,
-      isAIGenerated: idea.isAIGenerated || false,
-      status: 'active',
-      category: idea.category,
-      createdAt: new Date(),
-    };
+    CreateIdea({body:{
+      "title":idea.title,
+      "description":idea.description,
+      "projectId":projectDeatils?._id
+  },
+  authToken:authDeatils.token})
 
-    setIdeas([...ideas, newIdea]);
     setShowAddDialog(false);
-    setNewIdeaData({ title: '', description: '', category: '' });
   };
 
+
+  
+
   const handleEditIdea = (updatedIdea: Idea) => {
-    setIdeas(ideas.map(idea => 
-      idea.id === updatedIdea.id ? updatedIdea : idea
-    ));
+    
+    UpdateIdea({id:updatedIdea._id,authToken:authDeatils.token,body:{title:updatedIdea.title,description:updatedIdea.description}})
     setEditingIdea(null);
   };
 
+  useEffect(() => {
+    GetIdeas({id:projectDeatils?._id , authToken:authDeatils.token})
+  }, [])
+  
+
   const handleDeleteIdea = (id: string) => {
-    setIdeas(ideas.filter(idea => idea.id !== id));
+    DeleteIdea({id:id,authToken:authDeatils.token})
   };
 
   const handleRejectIdea = (id: string) => {
@@ -109,47 +113,12 @@ const IdeasPage = () => {
     ));
   };
 
-  const getMethodologyPrompts = () => {
-    switch (selectedMethodology) {
-      case 'scamper':
-        return SCAMPER_PROMPTS;
-      case 'analogy':
-        return ANALOGY_PROMPTS;
-      case 'mapping':
-        return MAPPING_PROMPTS;
-      default:
-        return {};
-    }
-  };
 
-  // Simulated AI idea generation
-  const generateIdeas = async () => {
-    setIsGenerating(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const simulatedIdeas: Idea[] = [];
-    
-    // Generate 3 ideas based on methodology
-    for (let i = 0; i < 3; i++) {
-      simulatedIdeas.push({
-        id: `ai-${Date.now()}-${i}`,
-        title: `AI Generated Idea for ${selectedMethodology} #${i + 1}`,
-        description: `This is a simulated AI-generated idea using the ${selectedMethodology} methodology based on your prompt: ${generationPrompt}`,
-        methodology: selectedMethodology,
-        isAIGenerated: true,
-        status: 'active',
-        createdAt: new Date(),
-      });
-    }
-    
-    setGeneratedIdeas(simulatedIdeas);
-    setIsGenerating(false);
-  };
+
+
 
   const renderIdeaCard = (idea: Idea) => (
-    <Card key={idea.id} className={`w-full bg-[#0f0f43] text-white border-none ${idea.status === 'rejected' ? 'opacity-60' : ''}`}>
+    <Card key={idea._id} className={`w-full bg-[#0f0f43] text-white border-none ${idea?.status === 'rejected' ? 'opacity-60' : ''}`}>
       <CardHeader className="p-4">
         <CardTitle className="text-lg flex items-center justify-between">
           <span className="flex items-center gap-2">
@@ -161,18 +130,18 @@ const IdeasPage = () => {
               </Badge>
             )}
           </span>
-          {idea.methodology && (
+          {/* {idea.methodology && (
             <Badge variant="outline" className='text-white'>{idea.methodology}</Badge>
-          )}
+          )} */}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <p className=" text-white">{idea.description}</p>
-        {idea.category && (
+        {/* {idea.category && (
           <Badge variant="outline" className="mt-2 text-white">
             {idea.category}
           </Badge>
-        )}
+        )} */}
       </CardContent>
       <CardFooter className="p-4 flex justify-between">
         <div className="flex gap-2">
@@ -186,15 +155,15 @@ const IdeasPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDeleteIdea(idea.id)}
+            onClick={() => handleDeleteIdea(idea._id)}
           >
             <Trash2 className="w-4 h-4 mr-1" /> Delete
           </Button>
-          <Link href={'/ideas/1'}>
+          <Link href={`/ideas/${idea._id}`}>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDeleteIdea(idea.id)}
+            // onClick={() => handleDeleteIdea(idea._id)}
             >
             <Eye className="w-4 h-4 mr-1" /> View
           </Button>
@@ -202,11 +171,11 @@ const IdeasPage = () => {
         </div>
         {idea.isAIGenerated && (
           <div className="flex gap-2">
-            {idea.status === 'active' ? (
+            {idea?.status === 'active' ? (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleRejectIdea(idea.id)}
+                onClick={() => handleRejectIdea(idea._id)}
               >
                 <ThumbsDown className="w-4 h-4 mr-1" /> Reject
               </Button>
@@ -214,7 +183,7 @@ const IdeasPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleKeepIdea(idea.id)}
+                onClick={() => handleKeepIdea(idea._id)}
               >
                 <ThumbsUp className="w-4 h-4 mr-1" /> Keep
               </Button>
@@ -224,6 +193,7 @@ const IdeasPage = () => {
       </CardFooter>
     </Card>
   );
+
 
   return (
     <div className="p-6">
@@ -258,23 +228,6 @@ const IdeasPage = () => {
                     description: e.target.value,
                   })}
                 />
-                <Select
-                  value={newIdeaData.category}
-                  onValueChange={value => setNewIdeaData({
-                    ...newIdeaData,
-                    category: value,
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                    <SelectItem value="process">Process</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
                 <Button 
                   onClick={() => handleAddIdea(newIdeaData)} 
                   className="w-full"
@@ -286,122 +239,34 @@ const IdeasPage = () => {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
-            <DialogTrigger asChild>
-              <Button variant="secondary">
-                <Lightbulb className="w-4 h-4 mr-2" /> Generate Ideas
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Generate Ideas with AI</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Select
-                  value={selectedMethodology}
-                  onValueChange={(value) => {
-                    setSelectedMethodology(value);
-                    setGenerationPrompt('');
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Methodology" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="scamper">SCAMPER</SelectItem>
-                    <SelectItem value="analogy">Analogy Thinking</SelectItem>
-                    <SelectItem value="mapping">Mind Mapping</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {selectedMethodology && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(getMethodologyPrompts()).map(([key, prompt]) => (
-                      <Button
-                        key={key}
-                        variant="outline"
-                        className="justify-start text-left h-auto py-2"
-                        onClick={() => setGenerationPrompt(prompt)}
-                      >
-                        <div>
-                          <div className="font-medium">{key}</div>
-                          <div className="text-sm text-gray-500">{prompt}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                )}
-
-                <Textarea
-                  placeholder="Describe your problem or context for idea generation..."
-                  className="h-32"
-                  value={generationPrompt}
-                  onChange={e => setGenerationPrompt(e.target.value)}
-                />
-
-                <Button
-                  onClick={generateIdeas}
-                  disabled={!selectedMethodology || !generationPrompt || isGenerating}
-                  className="w-full"
-                >
-                  {isGenerating ? 'Generating Ideas...' : 'Generate Ideas'}
-                </Button>
-
-                {generatedIdeas.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">Generated Ideas:</h3>
-                    {generatedIdeas.map(idea => (
-                      <Card key={idea.id} className="p-4">
-                        <h4 className="font-medium">{idea.title}</h4>
-                        <p className="text-sm text-gray-600 mt-2">{idea.description}</p>
-                        <div className="mt-4">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              handleAddIdea(idea);
-                              setGeneratedIdeas(generatedIdeas.filter(i => i.id !== idea.id));
-                            }}
-                          >
-                            <Plus className="w-4 h-4 mr-1" /> Add to Ideas
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className='bg-[#0f0f43] p-1'>
           <TabsTrigger className="data-[state=active]:bg-blue-600" value="all">All Ideas</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="manual">User Ideas</TabsTrigger>
           <TabsTrigger className="data-[state=active]:bg-blue-600" value="ai">AI Generated</TabsTrigger>
-          <TabsTrigger className="data-[state=active]:bg-blue-600" value="manual">Manual</TabsTrigger>
-          <TabsTrigger className="data-[state=active]:bg-blue-600" value="rejected">Rejected</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {ideas.length === 0 ? (
+      {getIdeasProps?.data?.data.length === 0 ? (
       <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {ideas
+          {getIdeasProps?.data?.data
             .filter(idea => {
               switch (activeTab) {
                 case 'ai':
-                  return idea.isAIGenerated && idea.status === 'active';
+                  return idea.isAiGenerated;
                 case 'manual':
-                  return !idea.isAIGenerated && idea.status === 'active';
+                  return !idea.isAIGenerated;
                 case 'rejected':
                   return idea.status === 'rejected';
                 default:
-                  return idea.status === 'active';
+                  return idea.isAIGenerated !== null;
               }
             })
-            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .map(renderIdeaCard)}
         </div>
       )}
@@ -424,20 +289,7 @@ const IdeasPage = () => {
                 placeholder="Idea Description"
                 className="h-32"
               />
-              <Select
-                value={editingIdea.category}
-                onValueChange={value => setEditingIdea({ ...editingIdea, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="product">Product</SelectItem>
-                  <SelectItem value="service">Service</SelectItem>
-                  <SelectItem value="process">Process</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+            
               <div className="flex justify-end gap-2">
                 <Button 
                   onClick={() => handleEditIdea(editingIdea)}

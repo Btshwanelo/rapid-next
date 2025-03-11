@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Info, Edit2, X, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 interface Question {
   id: string;
@@ -64,20 +65,20 @@ export default function InterviewQuestions() {
   };
 
   return (
-    <div className="flex  items-start justify-center bg-[#0f0f43] rounded-xl p-4">
-      <div className="w-full max-w-3xl">
+    <div className="flex  items-start justify-center  rounded-xl p-6">
+      <div className="w-full max-w-6xl">
         <h1 className="text-2xl font-bold text-center mb-2 text-white">Interview Questions by Segment</h1>
         <p className="text-gray-300 text-center mb-8">Select a segment to view and manage its questions</p>
 
         {/* Segment Selection */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-8 flex flex-wrap gap-4">
+        <div className="bg-[#0f0f43] rounded-lg p-4 mb-8 flex flex-wrap gap-4">
           {segments.map((segment) => (
             <Button
               key={segment.name}
               variant={selectedSegment === segment.name ? "default" : "outline"}
               className={`rounded-full ${
                 selectedSegment === segment.name 
-                  ? "bg-blue-500 text-white" 
+                  ? "bg-blue-600 text-white" 
                   : "bg-white"
               }`}
               onClick={() => setSelectedSegment(segment.name)}
@@ -97,10 +98,10 @@ export default function InterviewQuestions() {
             .map((question) => (
               <div
                 key={question.id}
-                className="flex items-center gap-3 p-4 bg-white border rounded-lg hover:border-gray-300 transition-colors"
+                className="flex items-center gap-3 p-4 bg-[#0f0f43] rounded-lg  transition-colors"
               >
                 <span className="text-gray-500">◇</span>
-                <p className="flex-grow text-gray-700">{question.text}</p>
+                <p className="flex-grow text-gray-400">{question.text}</p>
                
                 <Button
                   variant="ghost"
@@ -171,11 +172,14 @@ export default function InterviewQuestions() {
 
         {/* Continue Button */}
         <div className="flex justify-end mt-8">
+          <Link href={'/interview-dashboard'}>
           <Button
             className="bg-blue-500 hover:bg-blue-600 text-white px-6"
-          >
-            Continue to Scheduling
+            >
+            Continue to interviews
+
           </Button>
+            </Link>
         </div>
       </div>
     </div>

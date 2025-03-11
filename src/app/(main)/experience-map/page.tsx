@@ -1,6 +1,6 @@
 'use client'
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Brain } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Plus, Edit2, Trash2, Save, X, Brain, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,12 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EmptyState from '@/components/ui/EmptyState';
+import { Badge } from '@/components/ui/badge';
+import { useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation } from '@/services/ideaService';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
 
 interface Feature {
   id: string;
   title: string;
   description: string;
-  timeline: 'Near Term' | 'Mid Term' | 'Long Term';
+  timeline: 'near term' | 'mid term' | 'long term'|'none';
   group?: string;
 }
 
@@ -23,27 +27,80 @@ const ExperienceMap = () => {
   const [newFeature, setNewFeature] = useState<Partial<Feature>>({
     title: '',
     description: '',
-    timeline: 'Near Term'
+    timeline: 'none'
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isGrouped, setIsGrouped] = useState(false);
 
-  const handleAddFeature = () => {
-    if (newFeature.title && newFeature.description && newFeature.timeline) {
-      setFeatures([...features, {
-        ...newFeature as Feature,
-        id: Date.now().toString(),
-      }]);
-      setNewFeature({ title: '', description: '', timeline: 'Near Term' });
-      setShowAddDialog(false);
+  const projectDetails = useProject();
+  const authDetails = useAuth();
+
+  // Use RTK Query hooks
+  const [getIdeas, getIdeasProps] = useLazyGetIdeasByProjectQuery();
+  const [updateIdea, updateIdeaProps] = useUpdateIdeaMutation();
+
+  // Fetch ideas when component mounts
+  useEffect(() => {
+    if (projectDetails?._id && authDetails.token) {
+      fetchIdeas();
     }
+  }, [projectDetails?._id, authDetails.token]);
+
+  // Fetch ideas after successful idea update
+  useEffect(() => {
+    if (updateIdeaProps.isSuccess) {
+      fetchIdeas();
+    }
+  }, [updateIdeaProps.isSuccess]);
+
+  // Update features state when API data is fetched
+  useEffect(() => {
+    if (getIdeasProps.isSuccess && getIdeasProps.data) {
+      const mappedFeatures = mapApiDataToFeatures(getIdeasProps.data.data);
+      setFeatures(mappedFeatures);
+    }
+  }, [getIdeasProps.data, getIdeasProps.isSuccess]);
+
+  // Function to fetch ideas
+  const fetchIdeas = () => {
+    if (!projectDetails?._id || !authDetails.token) return;
+    
+    getIdeas({
+      id: projectDetails._id,
+      authToken: authDetails.token
+    });
   };
 
+  function mapApiDataToFeatures(apiData: any[]): Feature[] {
+    // Guard against null or undefined data
+    if (!apiData || !Array.isArray(apiData)) {
+      return [];
+    }
+  
+    return apiData.map(idea => {
+      // Create a Feature object that matches the interface
+      const feature: Feature = {
+        id: idea._id,
+        title: idea.title,
+        description: idea.description || '',
+        timeline: idea.timeline,
+      };
+  
+      return feature;
+    });
+  }
+
   const handleEditFeature = (feature: Feature) => {
-    const updatedFeatures = features.map(f =>
-      f.id === feature.id ? feature : f
-    );
-    setFeatures(updatedFeatures);
+    if (!authDetails.token) return;
+
+    // Update the idea in the backend
+    updateIdea({
+      id: feature.id,
+      authToken: authDetails.token,
+      body: { timeline: feature.timeline }
+    });
+
+    // Clear editing state
     setEditingFeature(null);
   };
 
@@ -69,9 +126,10 @@ const ExperienceMap = () => {
   };
 
   const timelineColors = {
-    'Near Term': 'bg-green-100',
-    'Mid Term': 'bg-yellow-100',
-    'Long Term': 'bg-red-100'
+    'near term': 'bg-green-100',
+    'mid term': 'bg-yellow-100',
+    'long term': 'bg-red-100',
+    'none': 'bg-red-100'
   };
 
   const renderFeatures = () => {
@@ -94,7 +152,7 @@ const ExperienceMap = () => {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {features.map(renderFeatureCard)}
       </div>
     );
@@ -104,37 +162,27 @@ const ExperienceMap = () => {
     <Card key={feature.id} className="w-full bg-[#0f0f43] border-none text-white">
       <CardHeader className={`${timelineColors[feature.timeline]} p-4 rounded-t-sm`}>
         <CardTitle className="text-lg text-gray-700">
-          {editingFeature?.id === feature.id ? (
-            <Input
-              value={editingFeature.title}
-              onChange={e => setEditingFeature({ ...editingFeature, title: e.target.value })}
-              className="mb-2"
-            />
-          ) : (
-            feature.title
-          )}
+          {feature.title}
         </CardTitle>
+        <Badge variant="secondary" className={`w-fit ${timelineColors[feature.timeline]}`}>
+          <Sparkles className="w-3 h-3 mr-1" />
+          {feature.timeline}
+        </Badge>
       </CardHeader>
       <CardContent className="p-4">
         {editingFeature?.id === feature.id ? (
           <>
-            <Input
-              value={editingFeature.description}
-              onChange={e => setEditingFeature({ ...editingFeature, description: e.target.value })}
-              className="mb-2 text-gray-700"
-            />
             <Select
               value={editingFeature.timeline}
-              
               onValueChange={value => setEditingFeature({ ...editingFeature, timeline: value as Feature['timeline'] })}
             >
               <SelectTrigger className="text-gray-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Near Term">Near Term</SelectItem>
-                <SelectItem value="Mid Term">Mid Term</SelectItem>
-                <SelectItem value="Long Term">Long Term</SelectItem>
+                <SelectItem value="near term">Near Term</SelectItem>
+                <SelectItem value="mid term">Mid Term</SelectItem>
+                <SelectItem value="long term">Long Term</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex gap-2 mt-4">
@@ -153,9 +201,10 @@ const ExperienceMap = () => {
               <Button size="sm" variant="ghost" onClick={() => setEditingFeature(feature)}>
                 <Edit2 className="w-4 h-4" /> Edit
               </Button>
+              {/* Uncomment if delete functionality is needed
               <Button size="sm" variant="ghost" onClick={() => handleDeleteFeature(feature.id)}>
                 <Trash2 className="w-4 h-4" /> Delete
-              </Button>
+              </Button> */}
             </div>
           </>
         )}
@@ -168,6 +217,7 @@ const ExperienceMap = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Experience Map</h1>
         <div className="flex gap-4">
+          {/* Uncomment if add feature dialog is needed
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button>
@@ -197,9 +247,9 @@ const ExperienceMap = () => {
                     <SelectValue placeholder="Select Timeline" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Near Term">Near Term</SelectItem>
-                    <SelectItem value="Mid Term">Mid Term</SelectItem>
-                    <SelectItem value="Long Term">Long Term</SelectItem>
+                    <SelectItem value="near term">Near Term</SelectItem>
+                    <SelectItem value="mid term">Mid Term</SelectItem>
+                    <SelectItem value="long term">Long Term</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={handleAddFeature} className="w-full">
@@ -207,21 +257,35 @@ const ExperienceMap = () => {
                 </Button>
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
+          
+          {/* Uncomment if AI grouping is needed
           <Button
             variant={isGrouped ? "destructive" : "secondary"}
             onClick={isGrouped ? removeGroups : simulateAIGrouping}
           >
             <Brain className="w-4 h-4 mr-2" />
             {isGrouped ? 'Remove Groups' : 'Group Features (AI)'}
-          </Button>
+          </Button> */}
         </div>
       </div>
 
-      {features.length === 0 ? (
+      {getIdeasProps.isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-white">Loading ideas...</p>
+        </div>
+      ) : features.length === 0 ? (
         <EmptyState />
       ) : (
         renderFeatures()
+      )}
+
+      {updateIdeaProps.isError && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>
+            Failed to update idea. Please try again.
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

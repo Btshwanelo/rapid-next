@@ -3,12 +3,36 @@ import { apiSlice } from '../slices/apiSlice';
 export const needSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     CreateNeed: builder.mutation({
-      query: (body) => ({
+      query: ({body,authToken}) => ({
         url: `/needs`,
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
         body,
       }),
-      invalidatesTags: [],
+      invalidatesTags: ['need'],
+    }),
+    UpdateNeed: builder.mutation({
+      query: ({body,authToken,id}) => ({
+        url: `/needs/${id}`,
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body,
+      }),
+      invalidatesTags: ['need'],
+    }),
+    DeleteNeed: builder.mutation({
+      query: ({id,authToken}) => ({
+        url: `/needs/${id}`,
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }),
+      invalidatesTags: ['need'],
     }),
     GetNeedsByProject: builder.query({
         query: ({id,authToken}) => ({
@@ -18,6 +42,7 @@ export const needSlice = apiSlice.injectEndpoints({
             Authorization: `Bearer ${authToken}`,
           },
         }),
+        providesTags:['need']
       }),
     GetNeedsByUser: builder.query({
         query: ({id,authToken}) => ({
@@ -27,11 +52,12 @@ export const needSlice = apiSlice.injectEndpoints({
             Authorization: `Bearer ${authToken}`,
           },
         }),
+        providesTags:['need']
       }),
   }),
 });
 
 export const {
-  useCreateNeedMutation,
-  useLazyGetNeedsByProjectQuery,
+  useCreateNeedMutation,useDeleteNeedMutation,
+  useLazyGetNeedsByProjectQuery,useUpdateNeedMutation,
   useLazyGetNeedsByUserQuery} = needSlice;

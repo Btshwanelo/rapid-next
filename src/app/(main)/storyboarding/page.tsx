@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Save, X, Users, Image as ImageIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
 import { useCreateStoryMutation, useDeleteStoryMutation, useLazyGetStoriesByProjectQuery, useUpdateStoryFrameMutation, useUpdateStoryMutation } from '@/services/storyboardService';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
 
 interface Frame {
   id: string;
@@ -47,6 +49,11 @@ const StoryboardPage = () => {
     description: '',
   });
 
+  console.log('----',selectedStoryboard)
+
+  const authDetails = useAuth();
+  const projectDetails = useProject();
+
   //Queries
   const [CreateStory,createStoryProps] = useCreateStoryMutation()
   const [UpdateStoryFrame,storyFrameProps] = useUpdateStoryFrameMutation()
@@ -61,16 +68,15 @@ const StoryboardPage = () => {
         id: Math.random().toString(36).substr(2, 9),
       }));
 
-      const newStoryboardObj: Storyboard = {
-        id: Date.now().toString(),
-        userType: newStoryboard.userType,
-        description: newStoryboard.description,
-        frames: emptyFrames,
-      };
 
-      CreateStory({})
-      setStoryboards([...storyboards, newStoryboardObj]);
-      setSelectedStoryboard(newStoryboardObj.id);
+      CreateStory({body:{
+        "projectId":projectDetails?._id,
+        "title":newStoryboard.userType,
+        "description":newStoryboard.description
+    },authToken:authDetails.token})
+
+      // setStoryboards([...storyboards, newStoryboardObj]);
+      // setSelectedStoryboard(newStoryboardObj.id);
       setNewStoryboard({ userType: '', description: '' });
       setShowAddStoryboardDialog(false);
     }
@@ -78,23 +84,27 @@ const StoryboardPage = () => {
 
   const handleEditFrame = (frameData: Frame, index: number) => {
     if (!selectedStoryboard) return;
+UpdateStoryFrame({body:{
+  description:frameData.description,notes:frameData.notes,imageUrl:frameData.imageUrl,title:frameData.title
+},storyId:selectedStoryboard,frameIndx:index,authToken:authDetails.token})
 
-    const updatedStoryboards = storyboards.map(storyboard => {
-      if (storyboard.id === selectedStoryboard) {
-        const updatedFrames = [...storyboard.frames];
-        updatedFrames[index] = frameData;
-        return { ...storyboard, frames: updatedFrames };
-      }
-      return storyboard;
-    });
-
-    setStoryboards(updatedStoryboards);
     setEditingFrame(null);
     setShowFrameDialog(false);
   };
 
+  useEffect(() => {
+    GetStory({projectId:projectDetails?._id,authToken:authDetails.token})
+  }, [])
+  
+  useEffect(() => {
+    if(getStoryProps.isSuccess){
+      setStoryboards(getStoryProps.data.data)
+    }
+  }, [getStoryProps.isSuccess])
+  
+
   const handleDeleteStoryboard = (id: string) => {
-    setStoryboards(storyboards.filter(s => s.id !== id));
+    DeleteStory({id,authToken:authDetails.token})
     if (selectedStoryboard === id) {
       setSelectedStoryboard(null);
     }
@@ -161,12 +171,12 @@ const StoryboardPage = () => {
   };
 
   const renderFrame = (frame: Frame, index: number) => (
-    <Card key={frame.id} className="w-full bg-[#0f0f43] border-none text-white">
+    <Card key={frame._id} className="w-full bg-[#0f0f43] border-none text-white">
       <CardHeader className="p-4">
         <CardTitle className="text-lg">Frame {index + 1}</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        {frame.imageUrl ? (
+        {frame?.imageUrl ? (
           <div className="relative w-full h-48 mb-4 bg-gray-100 rounded">
             <img
               src={frame.imageUrl}
@@ -243,24 +253,24 @@ const StoryboardPage = () => {
         <Tabs value={selectedStoryboard || ''} onValueChange={setSelectedStoryboard}>
           <TabsList className="mb-4 bg-[#0f0f43] p-1">
             {storyboards.map(storyboard => (
-              <TabsTrigger key={storyboard.id} value={storyboard.id} className="flex items-center data-[state=active]:bg-blue-600">
+              <TabsTrigger key={storyboard.__id} value={storyboard._id} className="flex items-center data-[state=active]:bg-blue-600">
                 <Users className="w-4 h-4 mr-2" />
-                {storyboard.userType}
+                {storyboard.title}
               </TabsTrigger>
             ))}
           </TabsList>
 
           {storyboards.map(storyboard => (
-            <TabsContent key={storyboard.id} value={storyboard.id}>
+            <TabsContent key={storyboard._id} value={storyboard._id}>
               <div className="mb-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-xl font-semibold text-white mb-2">{storyboard.userType}</h2>
+                    <h2 className="text-xl font-semibold text-white mb-2">{storyboard.title}</h2>
                     <p className="text-white">{storyboard.description}</p>
                   </div>
                   <Button
                     variant="destructive"
-                    onClick={() => handleDeleteStoryboard(storyboard.id)}
+                    onClick={() => handleDeleteStoryboard(storyboard._id)}
                   >
                     <Trash2 className="w-4 h-4 mr-2" /> Delete Storyboard
                   </Button>

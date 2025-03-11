@@ -1,11 +1,15 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Edit, Trash2, Save, Sparkles } from 'lucide-react';
+import { useLazyGetEmpathyAsIsByPersonaQuery } from '@/services/empathyService';
+import { useLazyGetPersonasListByProjectQuery } from '@/services/personaService';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
 
 type Persona = {
   id: string;
@@ -147,6 +151,21 @@ const EmpathyMap = () => {
     combined: createEmptySection(),
   });
 
+  const projectDeatils = useProject()
+  const authDeatils = useAuth()
+
+  const [GetPersonasListByProject,getPersonasProps] =useLazyGetPersonasListByProjectQuery()
+  const [GetEmpathyAsIs,getEmpathyProps] =useLazyGetEmpathyAsIsByPersonaQuery()
+
+  useEffect(() => {
+    GetPersonasListByProject({id:projectDeatils?._id,authToken:authDeatils.token})
+  }, [])
+  useEffect(() => {
+    GetEmpathyAsIs({id:selectedPersona,authToken:authDeatils.token})
+  }, [selectedPersona])
+
+  
+
   const generateAIEmpathy = () => {
     const aiData = getMockDataForPersona(selectedPersona);
     setEmpathyData(prev => ({
@@ -253,15 +272,15 @@ const EmpathyMap = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Empathy Map As Is</h1>
         <div className="flex items-center gap-4">
-          <Select value={selectedPersona}  onValueChange={setSelectedPersona}>
+          <Select value={selectedPersona}  defaultValue='Select Persona' onValueChange={setSelectedPersona}>
             <SelectTrigger className="max-w-[250px]" >
               <SelectValue placeholder="Select persona"  />
             </SelectTrigger>
             <SelectContent>
-              {PERSONAS.map(persona => (
+              {getPersonasProps?.data?.data.map(persona => (
                 <SelectItem 
-                  key={persona.id} 
-                  value={persona.id}
+                  key={persona._id} 
+                  value={persona._id}
                   className="flex flex-col"
                 >
                   <span className="font-medium">{persona.name}</span>

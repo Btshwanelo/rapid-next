@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, GripHorizontal } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EmptyState from '@/components/ui/EmptyState';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
+import { useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation, useUpdateIdeaPositionMutation } from '@/services/ideaService';
 
 interface Feature {
   id: string;
@@ -21,6 +24,57 @@ const PriorizationGrid = () => {
   const [newFeature, setNewFeature] = useState({ title: '', description: '' });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [draggedFeature, setDraggedFeature] = useState<Feature | null>(null);
+  const projectDeatils = useProject()
+  const authDeatils = useAuth()
+
+    const [UpdateIdeaPosition,updateIdeaProps] = useUpdateIdeaPositionMutation()
+    const [GetIdeas,getIdeasProps] = useLazyGetIdeasByProjectQuery()
+  
+    function mapApiDataToFeatures(apiData: any[]): Feature[] {
+      // Guard against null or undefined data
+      if (!apiData || !Array.isArray(apiData)) {
+        return [];
+      }
+    
+      return apiData.map(idea => {
+        // Extract the position data with fallbacks for missing values
+        const position = {
+          x: idea.prioritization?.position?.x ?? 0,
+          y: idea.prioritization?.position?.y ?? 0
+        };
+    
+        // Extract the quadrant with a fallback to 'none'
+        const quadrant = idea.prioritization?.quadrant as 'q1' | 'q2' | 'q3' | 'q4' | 'none' || 'none';
+    
+        // Create a Feature object that matches the interface
+        const feature: Feature = {
+          id: idea._id,
+          title: idea.title,
+          description: idea.description || '',
+          quadrant: quadrant,
+          position: position
+        };
+    
+        return feature;
+      });
+    }
+  
+    useEffect(() => {
+      GetIdeas({id:projectDeatils?._id , authToken:authDeatils.token})
+    }, [])
+    useEffect(() => {
+      if (getIdeasProps.isSuccess) {
+        // Extract the data from the API response
+        const apiData = getIdeasProps.data.data;
+        
+        // Map the API data to Feature objects
+        const mappedFeatures = mapApiDataToFeatures(apiData);
+        
+        // Update state with the mapped features
+        setFeatures(mappedFeatures);
+      }
+    }, [getIdeasProps.isSuccess]);
+    
 
   const getQuadrantFromPosition = (x: number, y: number): Feature['quadrant'] => {
     const midX = window.innerWidth / 2;
@@ -71,12 +125,22 @@ const PriorizationGrid = () => {
       const y = e.clientY - gridRect.top;
       
       const quadrant = getQuadrantFromPosition(x, y);
+
+      UpdateIdeaPosition({id:draggedFeature.id,authToken:authDeatils.token,body:{
+        "quadrant": quadrant,
+            "x": x,
+            "y": y
+        }
+    })
+
       
       const updatedFeatures = features.map(f => 
         f.id === draggedFeature.id
           ? { ...f, position: { x, y }, quadrant }
           : f
       );
+
+
       
       setFeatures(updatedFeatures);
       setDraggedFeature(null);
@@ -87,47 +151,45 @@ const PriorizationGrid = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Impact vs Urgency Grid</h1>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" /> Add Feature
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Feature</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                placeholder="Feature Title"
-                value={newFeature.title}
-                onChange={e => setNewFeature({ ...newFeature, title: e.target.value })}
-              />
-              <Input
-                placeholder="Feature Description"
-                value={newFeature.description}
-                onChange={e => setNewFeature({ ...newFeature, description: e.target.value })}
-              />
-              <Button onClick={handleAddFeature} className="w-full">
-                Add Feature
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        
+      </div>
+      <div className='mb-10 w-full justify-center gap-2 flex flex-wrap'>
+      {features
+            .filter(idea => idea.quadrant === 'none')
+            .map(idea => ( <Card
+              key={idea.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idea)}
+              className=" max-w-48 cursor-move bg-[#0f0f43] border-none"
+              style={{
+              }}
+            >
+              <CardContent className="p-4 ">
+                <div className="flex items-center gap-2">
+                  <GripHorizontal className="w-4 h-4 text-white" />
+                  <div>
+                    <h3 className="font-medium text-white">{idea.title}</h3>
+                    {/* {feature.description && (
+                      <p className="text-sm text-gray-500">{feature.description}</p>
+                    )} */}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>))}
       </div>
 
       {features.length === 0 ? (
         <EmptyState />
       ) : (
         <div 
-          className="relative w-full h-[800px] border-2 border-gray-50 rounded-lg"
+          className="relative w-full h-[800px] border border-gray-50 rounded-lg"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
           {/* Grid lines */}
           <div className="absolute inset-0">
-            <div className="absolute left-1/2 top-0 bottom-0 border-l-2 border-white" />
-            <div className="absolute top-1/2 left-0 right-0 border-t-2 border-white" />
+            <div className="absolute left-1/2 top-0 bottom-0 border-l border-white" />
+            <div className="absolute top-1/2 left-0 right-0 border-t border-white" />
           </div>
 
           {/* Quadrant Labels */}
@@ -145,20 +207,20 @@ const PriorizationGrid = () => {
           </div>
 
           {/* Axis Labels */}
-          <div className="absolute left-1/2 top-2 -translate-x-1/2 text-xl font-bold text-white">
+          <div className="absolute left-1/2 top-2 -translate-x-1/2 text-xl font-normal text-white">
             Impact
           </div>
-          <div className="absolute left-2 top-1/2 -translate-y-1/2 transform -rotate-90 text-xl text-white font-bold">
+          <div className="absolute left-2 top-1/2 -translate-y-1/2 transform -rotate-90 text-xl text-white font-nprma;">
             Urgency
           </div>
 
           {/* Features */}
-          {features.map(feature => (
+          {features.filter(idea => idea.quadrant != 'none').map(feature => (
             <Card
               key={feature.id}
               draggable
               onDragStart={(e) => handleDragStart(e, feature)}
-              className="absolute max-w-48 cursor-move bg-inherit border-none"
+              className="absolute max-w-48 cursor-move bg-[#0f0f43] border-none"
               style={{
                 left: `${feature.position.x}px`,
                 top: `${feature.position.y}px`,
@@ -170,9 +232,7 @@ const PriorizationGrid = () => {
                   <GripHorizontal className="w-4 h-4 text-white" />
                   <div>
                     <h3 className="font-medium text-white">{feature.title}</h3>
-                    {/* {feature.description && (
-                      <p className="text-sm text-gray-500">{feature.description}</p>
-                    )} */}
+                   
                   </div>
                 </div>
               </CardContent>

@@ -1,229 +1,306 @@
-// types.ts
-interface Idea {
-    id: string;
-    title: string;
-    description: string;
-    methodology?: string;
-    isAIGenerated: boolean;
-    status: 'active' | 'rejected';
-    category?: string;
-    createdAt: Date;
-    impact?: number;
-    feasibility?: number;
-    pros?: string[];
-    cons?: string[];
-    timeline?: {
-      research: string;
-      development: string;
-      testing: string;
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  ChevronRight, 
+  Star, 
+  Clock, 
+  Users, 
+  TrendingUp,
+  MessageCircle,
+  AlertCircle,
+  Lightbulb,
+  CheckCircle2,
+  XCircle,
+  ArrowLeft
+} from "lucide-react";
+import { useLazyGetIdeaByIdQuery, useUpdateIdeaMutation } from '@/services/ideaService';
+import { useParams } from 'next/navigation';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
+import Link from 'next/link';
+
+// Define API response interface based on the sample data structure
+interface ApiIdea {
+  _id: string;
+  title: string;
+  description: string;
+  methodology?: string;
+  isAiGenerated: boolean;
+  timeline?: string;
+  category?: string;
+  prioritization?: {
+    quadrant: string;
+    position: {
+      x: number;
+      y: number;
     };
-    requiredResources?: string[];
-    collaborators?: {
-      department: string;
-      votes: number;
-    }[];
-    version?: {
-      number: string;
-      date: string;
-      changes: string;
-    }[];
-    clarifyingQuestions?: {
-      question: string;
-      answer?: string;
-    }[];
-    trendApplications?: {
-      trend: string;
-      application: string;
-    }[];
-    stakeholderEvaluations?: {
-      name: string;
-      role: string;
-      rating: number;
-      feedback: string;
-      concerns: string[];
-      opportunities: string[];
-      avatar?: string;
-    }[];
-  }
-  
-  // IdeaDetailPage.tsx
-  'use client';
-  
-  import { useState } from 'react';
-  import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-  import { Progress } from "@/components/ui/progress";
-  import { Button } from "@/components/ui/button";
-  import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-  import { Badge } from "@/components/ui/badge";
-  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-  import { 
-    ChevronRight, 
-    Star, 
-    Clock, 
-    Users, 
-    TrendingUp,
-    MessageCircle,
-    AlertCircle,
-    Lightbulb,
-    CheckCircle2,
-    XCircle
-  } from "lucide-react";
-  
-  interface IdeaDetailPageProps {
-    idea: Idea;
-  }
-  
-  export default function IdeaDetailPage() {
-    const [activeTab, setActiveTab] = useState('overview');
-  const [idea, setIdea] = useState(sampleIdea)
+  };
+  impact?: number;
+  feasibility?: number;
+  pros?: string[];
+  cons?: string[];
+  requiredResources?: string[];
+  collaborators?: {
+    department: string;
+    votes: number;
+    _id: string;
+  }[];
+  version?: {
+    number: string;
+    date: string;
+    changes: string;
+    _id: string;
+  }[];
+  clarifyingQuestions?: {
+    question: string;
+    answer?: string;
+    _id: string;
+  }[];
+  trendApplications?: {
+    trend: string;
+    application: string;
+    _id: string;
+  }[];
+  stakeholderEvaluations?: {
+    name: string;
+    role: string;
+    rating: number;
+    feedback: string;
+    concerns: string[];
+    opportunities: string[];
+    avatar?: string;
+    _id: string;
+  }[];
+  projectId: string;
+  createdAt: string;
+}
+
+export default function IdeaDetailPage() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const params = useParams();
+  const id = params.id as string; 
+  const projectDetails = useProject();
+  const authDetails = useAuth();
+
+  // RTK Query hooks
+  const [updateIdea, updateIdeaProps] = useUpdateIdeaMutation();
+  const [getIdea, getIdeaProps] = useLazyGetIdeaByIdQuery();
+
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch idea data when component mounts
+  useEffect(() => {
+    if (id && authDetails?.token) {
+      getIdea({ authToken: authDetails.token, id });
+    }
+  }, [id, authDetails?.token, getIdea]);
+
+  // Update loading and error states based on API response
+  useEffect(() => {
+    if (getIdeaProps.isLoading) {
+      setIsLoading(true);
+    } else if (getIdeaProps.isError) {
+      setIsLoading(false);
+      setError('Failed to load idea details. Please try again.');
+    } else if (getIdeaProps.isSuccess) {
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [getIdeaProps.isLoading, getIdeaProps.isError, getIdeaProps.isSuccess]);
+
+  // Get the idea data from the API response
+  const idea = getIdeaProps.data?.data as ApiIdea | undefined;
+
+  // Render loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen space-y-6 p-6">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
-              <span>{idea.category}</span>
-              <ChevronRight className="h-4 w-4" />
-              <Badge variant={idea.status === 'active' ? 'default' : 'destructive'}>
-                {idea.status}
-              </Badge>
-            </div>
-            <h1 className="text-3xl font-bold text-white">{idea.title}</h1>
-            <p className="text-gray-400 mt-2">{idea.description}</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-white">Loading idea details...</p>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error || !idea) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="bg-[#0f0f43] border-none">
+          <CardContent className="p-6">
+            <p className="text-red-400">{error || 'No idea found'}</p>
+            <Button className="mt-4" onClick={() => window.history.back()}>
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen space-y-6 p-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <Link href={'/ideas'} className='flex text-gray-400 mb-2'>
+          {/* <Button variant={'ghost'}> */}
+           <ArrowLeft className='text-gray-400 mr-1' /> back
+          </Link>
+          {/* </Button> */}
+          <div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
+            <span>{idea.category}</span>
+            <ChevronRight className="h-4 w-4" />
+            <Badge variant={idea.isAiGenerated ? 'default' : 'secondary'}>
+              {idea.isAiGenerated ? 'AI Generated' : 'User Created'}
+            </Badge>
           </div>
-          {/* <Button className="bg-blue-600 hover:bg-blue-700">
-            Edit Idea
-          </Button> */}
+          <h1 className="text-3xl font-bold text-white">{idea.title}</h1>
+          <p className="text-gray-400 mt-2">{idea.description}</p>
         </div>
-  
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-6">
-          <Card className="bg-[#0f0f43] border-none">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-white font-semibold">Impact</h3>
-                <span className="text-blue-400">{idea.impact}%</span>
-              </div>
-              <Progress value={idea.impact} className="bg-blue-950" />
-            </CardContent>
-          </Card>
-          <Card className="bg-[#0f0f43] border-none">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-white font-semibold">Feasibility</h3>
-                <span className="text-blue-400">{idea.feasibility}%</span>
-              </div>
-              <Progress value={idea.feasibility} className="bg-blue-950" />
-            </CardContent>
-          </Card>
-        </div>
-  
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-[#0f0f43] p-1">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="questions" className="data-[state=active]:bg-blue-600">
-              Clarifying Questions
-            </TabsTrigger>
-            <TabsTrigger value="trends" className="data-[state=active]:bg-blue-600">
-              Trend Applications
-            </TabsTrigger>
-            <TabsTrigger value="stakeholders" className="data-[state=active]:bg-blue-600">
-              Stakeholder Evaluations
-            </TabsTrigger>
-          </TabsList>
-  
-          <TabsContent value="overview" className="space-y-6">
-            {/* Pros & Cons */}
-            <div className="grid grid-cols-2 gap-6">
-              <Card className="bg-[#0f0f43] border-none">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    Pros
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {idea.pros?.map((pro, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-300">
-                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-1" />
-                        {pro}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card className="bg-[#0f0f43] border-none">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-red-500" />
-                    Cons
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {idea.cons?.map((con, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-300">
-                        <XCircle className="h-4 w-4 text-red-500 mt-1" />
-                        {con}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+        {/* <Button className="bg-blue-600 hover:bg-blue-700">
+          Edit Idea
+        </Button> */}
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 gap-6">
+        <Card className="bg-[#0f0f43] border-none">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-white font-semibold">Impact</h3>
+              <span className="text-blue-400">{idea.impact}%</span>
             </div>
-  
-            {/* Timeline & Resources */}
+            <Progress value={idea.impact} className="bg-blue-950" />
+          </CardContent>
+        </Card>
+        <Card className="bg-[#0f0f43] border-none">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-white font-semibold">Feasibility</h3>
+              <span className="text-blue-400">{idea.feasibility}%</span>
+            </div>
+            <Progress value={idea.feasibility} className="bg-blue-950" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-[#0f0f43] p-1">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="questions" className="data-[state=active]:bg-blue-600">
+            Clarifying Questions
+          </TabsTrigger>
+          <TabsTrigger value="trends" className="data-[state=active]:bg-blue-600">
+            Trend Applications
+          </TabsTrigger>
+          <TabsTrigger value="stakeholders" className="data-[state=active]:bg-blue-600">
+            Stakeholder Evaluations
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Pros & Cons */}
+          <div className="grid grid-cols-2 gap-6">
             <Card className="bg-[#0f0f43] border-none">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Timeline & Resources
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  Pros
                 </CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-white font-semibold mb-4">Milestones</h3>
-                  <ul className="space-y-2">
-                    <li className="text-gray-300">Research: {idea.timeline?.research}</li>
-                    <li className="text-gray-300">Development: {idea.timeline?.development}</li>
-                    <li className="text-gray-300">Testing: {idea.timeline?.testing}</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-4">Required Resources</h3>
-                  <ul className="space-y-2">
-                    {idea.requiredResources?.map((resource, index) => (
-                      <li key={index} className="text-gray-300">{resource}</li>
-                    ))}
-                  </ul>
-                </div>
+              <CardContent>
+                <ul className="space-y-2">
+                  {idea.pros?.map((pro, index) => (
+                    <li key={index} className="flex items-start gap-2 text-gray-300">
+                      <CheckCircle2 className="h-4 w-4 text-green-500 mt-1" />
+                      {pro}
+                    </li>
+                  ))}
+                </ul>
               </CardContent>
             </Card>
-          </TabsContent>
-  
-          <TabsContent value="questions" className="space-y-6">
             <Card className="bg-[#0f0f43] border-none">
-              <CardContent className="p-6 space-y-6">
-                {idea.clarifyingQuestions?.map((q, index) => (
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-500" />
+                  Cons
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {idea.cons?.map((con, index) => (
+                    <li key={index} className="flex items-start gap-2 text-gray-300">
+                      <XCircle className="h-4 w-4 text-red-500 mt-1" />
+                      {con}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Timeline & Resources */}
+          <Card className="bg-[#0f0f43] border-none">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Timeline & Resources
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-white font-semibold mb-4">Timeline</h3>
+                <div className="text-gray-300">
+                  <p>Implementation: {idea.timeline || "Not specified"}</p>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold mb-4">Required Resources</h3>
+                <ul className="space-y-2">
+                  {idea.requiredResources?.map((resource, index) => (
+                    <li key={index} className="text-gray-300">{resource}</li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="questions" className="space-y-6">
+          <Card className="bg-[#0f0f43] border-none">
+            <CardContent className="p-6 space-y-6">
+              {idea.clarifyingQuestions?.length ? (
+                idea.clarifyingQuestions.map((q, index) => (
                   <div key={index} className="space-y-2">
                     <h3 className="text-white font-semibold">{q.question}</h3>
                     <p className="text-gray-300 bg-blue-500/10 p-4 rounded-lg">
                       {q.answer || 'Not answered yet'}
                     </p>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-  
-          <TabsContent value="trends" className="space-y-6">
-            <Card className="bg-[#0f0f43] border-none">
-              <CardContent className="p-6 space-y-6">
-                {idea.trendApplications?.map((trend, index) => (
+                ))
+              ) : (
+                <p className="text-gray-400">No clarifying questions available.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="trends" className="space-y-6">
+          <Card className="bg-[#0f0f43] border-none">
+            <CardContent className="p-6 space-y-6">
+              {idea.trendApplications?.length ? (
+                idea.trendApplications.map((trend, index) => (
                   <div key={index} className="flex items-start gap-4 bg-blue-500/10 p-4 rounded-lg">
                     <TrendingUp className="h-5 w-5 text-blue-400 mt-1" />
                     <div>
@@ -231,14 +308,18 @@ interface Idea {
                       <p className="text-gray-300 mt-1">{trend.application}</p>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-  
-          <TabsContent value="stakeholders" className="space-y-6">
-            <div className="grid gap-6">
-              {idea.stakeholderEvaluations?.map((stakeholder, index) => (
+                ))
+              ) : (
+                <p className="text-gray-400">No trend applications available.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="stakeholders" className="space-y-6">
+          <div className="grid gap-6">
+            {idea.stakeholderEvaluations?.length ? (
+              idea.stakeholderEvaluations.map((stakeholder, index) => (
                 <Card key={index} className="bg-[#0f0f43] border-none">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
@@ -257,7 +338,7 @@ interface Idea {
                           <Star
                             key={i}
                             className={`h-5 w-5 ${
-                              i < stakeholder.rating 
+                              i < Math.min(stakeholder.rating / 2, 5)
                                 ? 'text-yellow-400 fill-yellow-400' 
                                 : 'text-gray-600'
                             }`}
@@ -292,153 +373,13 @@ interface Idea {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  }
-
-
-  // sampleIdea.ts
-
-export const sampleIdea: Idea = {
-    id: "idea-001",
-    title: "User-Centric Mobile App",
-    description: "A mobile application that adapts its interface based on user behavior patterns and preferences, creating a more personalized and efficient user experience.",
-    methodology: "Agile development with weekly user testing and feedback loops",
-    isAIGenerated: false,
-    status: 'active',
-    category: "Mobile Development",
-    createdAt: new Date("2024-02-15"),
-    impact: 85,
-    feasibility: 75,
-    
-    pros: [
-      "Highly personalized user experience",
-      "Increased user engagement and retention",
-      "Data-driven decision making",
-      "Potential for continuous improvement"
-    ],
-    
-    cons: [
-      "Complex implementation required",
-      "Privacy concerns need to be addressed",
-      "Resource intensive development",
-      "Requires significant user data collection"
-    ],
-    
-    timeline: {
-      research: "1 month",
-      development: "3 months",
-      testing: "2 months"
-    },
-    
-    requiredResources: [
-      "Mobile developers",
-      "UX designers",
-      "Data analysts",
-      "Machine learning engineers",
-      "QA testers"
-    ],
-    
-    collaborators: [
-      { department: "Product", votes: 15 },
-      { department: "Engineering", votes: 12 },
-      { department: "Design", votes: 8 },
-      { department: "Data Science", votes: 7 }
-    ],
-    
-    version: [
-      {
-        number: "v1.2",
-        date: "2024-01-15",
-        changes: "Added AI features for better personalization"
-      },
-      {
-        number: "v1.1",
-        date: "2024-01-01",
-        changes: "Initial concept with basic personalization"
-      }
-    ],
-    
-    clarifyingQuestions: [
-      {
-        question: "How will this benefit the end user?",
-        answer: "Users will experience a more intuitive interface that adapts to their usage patterns, resulting in faster task completion and improved satisfaction."
-      },
-      {
-        question: "What technical resources are needed?",
-        answer: "We'll need a full-stack team including mobile developers, UX designers, and data scientists for the AI/ML components."
-      },
-      {
-        question: "What's the timeline for implementation?",
-        answer: "Initial MVP in 3-6 months, with continuous improvements based on user feedback and data analysis."
-      }
-    ],
-    
-    trendApplications: [
-      {
-        trend: "AI/ML",
-        application: "Implement machine learning algorithms to predict user preferences and adapt the interface accordingly."
-      },
-      {
-        trend: "Privacy-First Design",
-        application: "Ensure all personalization features respect user privacy and comply with data protection regulations."
-      },
-      {
-        trend: "Microinteractions",
-        application: "Add subtle animations and feedback mechanisms that make the app feel more responsive and engaging."
-      }
-    ],
-    
-    stakeholderEvaluations: [
-      {
-        name: "Sarah Chen",
-        role: "Product Manager",
-        rating: 5,
-        feedback: "Strong potential for customer satisfaction improvement. Need to ensure proper AI training.",
-        concerns: [
-          "Integration with existing customer service workflow",
-          "Training time for AI models"
-        ],
-        opportunities: [
-          "Could expand to multiple languages in future phases",
-          "Potential for predictive user assistance"
-        ],
-        avatar: "/api/placeholder/150/150"
-      },
-      {
-        name: "Mike Rodriguez",
-        role: "Technical Lead",
-        rating: 4,
-        feedback: "Technically challenging but feasible. Will require careful architecture planning.",
-        concerns: [
-          "System scalability",
-          "Data storage optimization",
-          "Real-time processing requirements"
-        ],
-        opportunities: [
-          "Platform for future AI/ML initiatives",
-          "Improved user behavior analytics"
-        ],
-        avatar: "/api/placeholder/150/150"
-      },
-      {
-        name: "Emily Watson",
-        role: "UX Designer",
-        rating: 4,
-        feedback: "Great potential for improving user experience. Need to ensure transitions are smooth.",
-        concerns: [
-          "User interface consistency",
-          "Handling edge cases in personalization"
-        ],
-        opportunities: [
-          "Enhanced user engagement",
-          "Reduced learning curve for new users"
-        ],
-        avatar: "/api/placeholder/150/150"
-      }
-    ]
-  };
+              ))
+            ) : (
+              <p className="text-gray-400">No stakeholder evaluations available.</p>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

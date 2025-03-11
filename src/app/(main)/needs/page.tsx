@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Save, Brain, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
-import { useCreateNeedMutation, useLazyGetNeedsByProjectQuery } from '@/services/needService';
+import { useCreateNeedMutation, useDeleteNeedMutation, useLazyGetNeedsByProjectQuery, useLazyGetNeedsByUserQuery, useUpdateNeedMutation } from '@/services/needService';
+import { useLazyGetPersonasListByProjectQuery } from '@/services/personaService';
+import useProject from '@/hooks/useProject';
+import useAuth from '@/hooks/useAuth';
 
 interface NeedsStatement {
   id: string;
@@ -48,14 +51,9 @@ const NeedsStatementForm = ({
 }) => {
   const [formData, setFormData] = useState({
     personaId: selectedPersonaId || initialData.personaId || '',
-    statement: initialData.statement || '',
-    context: initialData.context || '',
-    priority: initialData.priority || 'medium',
-    category: initialData.category || '',
+    statement: initialData.need || '',
+    context: initialData.reason || '',
   });
-
-  const [CreateNeed,createNeedProps] = useCreateNeedMutation()
-  const [GetNeedByProject,getNeedProps] = useLazyGetNeedsByProjectQuery()
 
   return (
     <div className="space-y-4">
@@ -97,31 +95,6 @@ const NeedsStatementForm = ({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Select
-            value={formData.priority}
-            onValueChange={(value) => setFormData({ ...formData, priority: value as 'high' | 'medium' | 'low' })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="high">High Priority</SelectItem>
-              <SelectItem value="medium">Medium Priority</SelectItem>
-              <SelectItem value="low">Low Priority</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Input
-            placeholder="Category"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          />
-        </div>
-      </div>
 
       <Button
         onClick={() => onSubmit(formData)}
@@ -180,10 +153,10 @@ const NeedsStatementCard = ({
         </div>
       </CardHeader>
       <CardContent className="p-4">
-        <p className="text-lg font-medium mb-2">{statement.statement}</p>
-        {statement.context && (
-          <p className=" text-sm">{statement.context}</p>
-        )}
+        <p className="text-lg font-medium mb-2">{statement.need}</p>
+        
+          <p className=" text-sm">{statement.reason}</p>
+        
       </CardContent>
       <CardFooter className="p-4 flex justify-between">
         <div className="flex gap-2">
@@ -234,24 +207,45 @@ const NeedsStatementsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const projectDeatils = useProject()
+  const authDeatils = useAuth()
+    const [GetPersonasListByProject,getPersonasProps] =useLazyGetPersonasListByProjectQuery()
+  const [CreateNeed,createProps] = useCreateNeedMutation()
+  const [GetNeedsByUser,getProps]= useLazyGetNeedsByUserQuery()
+  const [UpdateNeed,updateProps] = useUpdateNeedMutation()
+  const [DeleteNeed,deleteProps] = useDeleteNeedMutation()
+      useEffect(() => {
+        GetPersonasListByProject({id:projectDeatils?._id,authToken:authDeatils.token})
+      }, [])
 
   const handleAddStatement = (data: Partial<NeedsStatement>) => {
-    const newStatement: NeedsStatement = {
-      id: Date.now().toString(),
-      personaId: data.personaId!,
-      statement: data.statement!,
-      context: data.context!,
-      priority: data.priority!,
-      category: data.category!,
-      status: 'active',
-      createdAt: new Date(),
-    };
-    setNeedsStatements([...needsStatements, newStatement]);
-    setShowAddDialog(false);
+
+    CreateNeed({
+      body:{
+        userId:selectedPersonaId,
+        need: data.statement,
+        reason: data.context,
+        projectId:projectDeatils?._id
+      }
+      ,authToken:authDeatils.token})
+    // setNeedsStatements([...needsStatements, newStatement]);
+    // setShowAddDialog(false);
   };
 
   const handleEditStatement = (data: Partial<NeedsStatement>) => {
     if (!editingId) return;
+    console.log("----",data)
+
+    UpdateNeed({
+      body:{
+        userId:selectedPersonaId,
+        need: data.statement,
+        reason: data.context,
+        projectId:projectDeatils?._id
+      }
+      ,authToken:authDeatils.token
+      ,id:editingId
+    })
     setNeedsStatements(statements =>
       statements.map(statement =>
         statement.id === editingId
@@ -262,7 +256,15 @@ const NeedsStatementsPage = () => {
     setEditingId(null);
   };
 
+  useEffect(() => {
+    if(selectedPersonaId !=='all'){
+      GetNeedsByUser({id:selectedPersonaId,authToken:authDeatils.token})
+    }
+  }, [selectedPersonaId])
+  
+
   const handleDeleteStatement = (id: string) => {
+    DeleteNeed({id,authToken:authDeatils.token})
     setNeedsStatements(statements =>
       statements.filter(statement => statement.id !== id)
     );
@@ -331,12 +333,16 @@ const NeedsStatementsPage = () => {
               <SelectValue placeholder="Filter by Persona" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Personas</SelectItem>
-              {personas.map((persona) => (
-                <SelectItem key={persona.id} value={persona.id}>
-                  {persona.name}
-                </SelectItem>
-              ))}
+              {getPersonasProps?.data?.data.map(persona => (
+                              <SelectItem 
+                                key={persona._id} 
+                                value={persona._id}
+                                className=""
+                              >
+                                <span className="font-medium">{persona.name}</span>
+                                {/* <span className="text-sm text-muted-foreground">{persona.description}</span> */}
+                              </SelectItem>
+                            ))}
             </SelectContent>
           </Select>
 
@@ -373,37 +379,38 @@ const NeedsStatementsPage = () => {
         </div>
       </div>
 
-      {filteredStatements.length === 0 ? (
+      {getProps?.data?.data?.length === 0 ? (
        
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStatements.map(statement => {
-            const persona = personas.find(p => p.id === statement.personaId)!;
+          {getProps?.data?.data?.map(statement => {
+            const persona = getPersonasProps?.data?.data.find(p => p._id === statement.userId)!;
             return (
               <NeedsStatementCard
-                key={statement.id}
+                key={statement._id}
                 statement={statement}
                 persona={persona}
-                onEdit={() => setEditingId(statement.id)}
-                onDelete={() => handleDeleteStatement(statement.id)}
-                onKeep={() => handleKeepStatement(statement.id)}
-                onReject={() => handleRejectStatement(statement.id)}
+                onEdit={() => setEditingId(statement._id)}
+                onDelete={() => handleDeleteStatement(statement._id)}
+                onKeep={() => handleKeepStatement(statement._id)}
+                onReject={() => handleRejectStatement(statement._id)}
               />
             );
           })}
         </div>
       )}
 
+
       <Dialog open={!!editingId} onOpenChange={(open) => !open && setEditingId(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Needs Statement</DialogTitle>
           </DialogHeader>
-          {editingId && needsStatements.find(s => s.id === editingId) && (
+          {editingId && getProps?.data?.data.find(s => s._id === editingId) && (
             <NeedsStatementForm
               personas={personas}
-              initialData={needsStatements.find(s => s.id === editingId)!}
+              initialData={getProps?.data?.data.find(s => s._id === editingId)!}
               onSubmit={handleEditStatement}
               submitLabel="Save Changes"
               selectedPersonaId={selectedPersonaId}

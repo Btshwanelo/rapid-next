@@ -16,7 +16,7 @@ export const problemSlice = apiSlice.injectEndpoints({
     UpdateProblem: builder.mutation({
       query: ({body,authToken,id}) => ({
         url: `/problem-statements/${id}`,
-        method: 'POST',
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -25,13 +25,12 @@ export const problemSlice = apiSlice.injectEndpoints({
       invalidatesTags: ['problem'],
     }),
     DeleteProblem: builder.mutation({
-      query: ({body,authToken,id}) => ({
+      query: ({authToken,id}) => ({
         url: `/problem-statements/${id}`,
-        method: 'POST',
+        method: 'DELETE',
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
-        body,
       }),
       invalidatesTags: ['problem'],
     }),
