@@ -20,10 +20,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Define menu items as a separate constant
 const MENU_ITEMS = [
   { icon: FileText, label: 'Problem Statement', url: '/problem-statement' },
-  { icon: Users, label: 'Personas', url: '/personas' },
+  { icon: Users, label: 'Interviews', url: '/interview-segments' },
   { icon: Heart, label: 'Empathy As Is', url: '/empathy-as-is' },
   { icon: Target, label: 'Empathy To Be', url: '/empathy-to-be' },
   { icon: FileText, label: 'Needs Statement', url: '/needs' },

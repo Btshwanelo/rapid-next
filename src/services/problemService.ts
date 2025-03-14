@@ -44,12 +44,23 @@ export const problemSlice = apiSlice.injectEndpoints({
         }),
         providesTags:['problem']
       }),
+    GetProblemById: builder.query({
+        query: ({id,authToken}) => ({
+          url: `/problem-statements/${id}`,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }),
+        providesTags:['problem']
+      }),
   }),
 });
 
 export const {
   useCreateProblemMutation,
   useLazyGetProblemByProjectQuery,
+  useLazyGetProblemByIdQuery,
   useUpdateProblemMutation,
   useDeleteProblemMutation
 } = problemSlice;

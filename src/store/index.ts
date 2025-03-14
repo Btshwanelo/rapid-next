@@ -4,11 +4,13 @@ import storage from 'redux-persist/lib/storage';
 import authReducer from '../slices/authSlice';
 import projectReducer from '../slices/projectSlice';
 import { apiSlice } from '@/slices/apiSlice';
+import {  autogentApiSlice } from '@/slices/autogenApiSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   project: projectReducer,
   [apiSlice.reducerPath]: apiSlice.reducer,
+  [autogentApiSlice.reducerPath]: autogentApiSlice.reducer,
 });
 
 // Configuring persistence
@@ -28,7 +30,7 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(apiSlice.middleware),
+    }).concat(apiSlice.middleware,autogentApiSlice.middleware),
 });
 
 export const persistor = persistStore(store);
