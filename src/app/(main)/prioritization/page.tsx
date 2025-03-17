@@ -10,12 +10,13 @@ import EmptyState from '@/components/ui/EmptyState';
 import useProject from '@/hooks/useProject';
 import useAuth from '@/hooks/useAuth';
 import { useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation, useUpdateIdeaPositionMutation } from '@/services/ideaService';
+import { useIdeaPrioritizeMutation } from '@/slices/autogenApiSlice';
 
 interface Feature {
   id: string;
   title: string;
   description: string;
-  quadrant: 'q1' | 'q2' | 'q3' | 'q4';
+  quadrant: 'q1' | 'q2' | 'q3' | 'q4'|'none';
   position: { x: number; y: number };
 }
 
@@ -29,6 +30,7 @@ const PriorizationGrid = () => {
 
     const [UpdateIdeaPosition,updateIdeaProps] = useUpdateIdeaPositionMutation()
     const [GetIdeas,getIdeasProps] = useLazyGetIdeasByProjectQuery()
+    const [IdeaPrioritize,ideaPrioritizeProps] = useIdeaPrioritizeMutation()
   
     function mapApiDataToFeatures(apiData: any[]): Feature[] {
       // Guard against null or undefined data
@@ -44,7 +46,7 @@ const PriorizationGrid = () => {
         };
     
         // Extract the quadrant with a fallback to 'none'
-        const quadrant = idea.prioritization?.quadrant as 'q1' | 'q2' | 'q3' | 'q4' | 'none' || 'none';
+        const quadrant = idea.prioritization?.quadrant as 'q1' | 'q2' | 'q3' | 'q4' | 'none';
     
         // Create a Feature object that matches the interface
         const feature: Feature = {
@@ -69,6 +71,10 @@ const PriorizationGrid = () => {
         
         // Map the API data to Feature objects
         const mappedFeatures = mapApiDataToFeatures(apiData);
+
+        // if(mappedFeatures.filter(idea => idea.quadrant === 'none').length>0){
+        //   IdeaPrioritize({ideas:mappedFeatures.filter(idea => idea.quadrant === 'none')})
+        // }
         
         // Update state with the mapped features
         setFeatures(mappedFeatures);
@@ -182,7 +188,7 @@ const PriorizationGrid = () => {
         <EmptyState />
       ) : (
         <div 
-          className="relative w-full h-[800px] border border-gray-50 rounded-lg"
+          className="relative w-full h-[800px] border border-gray-50 opacity-75 rounded-lg"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
@@ -193,24 +199,24 @@ const PriorizationGrid = () => {
           </div>
 
           {/* Quadrant Labels */}
-          <div className="absolute top-4 left-4 text-lg font-semibold text-white">
-            Low Impact, High Urgency
+          <div className="absolute top-4 left-4 text-lg font-semibold text-gray-50 opacity-15 ">
+            Low Urgency, High Impact
           </div>
-          <div className="absolute top-4 right-4 text-lg font-semibold text-white">
-            High Impact, High Urgency
+          <div className="absolute top-4 right-4 text-lg font-semibold text-gray-50 opacity-15 ">
+            High Urgency, High Impact
           </div>
-          <div className="absolute bottom-4 left-4 text-lg font-semibold text-white">
-            Low Impact, Low Urgency
+          <div className="absolute bottom-4 left-4 text-lg font-semibold text-gray-50 opacity-15 ">
+            Low Urgency, Low Impact
           </div>
-          <div className="absolute bottom-4 right-4 text-lg font-semibold text-white">
-            High Impact, Low Urgency
+          <div className="absolute bottom-4 right-4 text-lg font-semibold text-gray-50 opacity-15 ">
+            High Urgency, Low Impact
           </div>
 
           {/* Axis Labels */}
-          <div className="absolute left-1/2 top-2 -translate-x-1/2 text-xl font-normal text-white">
+          <div className="absolute left-1/2 bottom-0 -translate-x-1/2 text-xl font-semibold text-white">
             Impact
           </div>
-          <div className="absolute left-2 top-1/2 -translate-y-1/2 transform -rotate-90 text-xl text-white font-nprma;">
+          <div className="absolute left-2 top-1/2 -translate-y-1/2 transform -rotate-90 text-xl text-white font-semibold">
             Urgency
           </div>
 

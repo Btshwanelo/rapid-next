@@ -4,7 +4,7 @@
  * @param {string|Object} input - The JSON string or object containing the resultset
  * @returns {Array} - Array of questions in the format {question: String, answer: String}
  */
-export const  extractQuestions =(input) =>{
+export const  extractQuestions =(input:any) =>{
     try {
       // Handle the input which could be a string or already an object
       let data;
@@ -45,7 +45,7 @@ export const  extractQuestions =(input) =>{
    * @param {string|Object} resultset - The resultset containing questions
    * @returns {Array} - Formatted questions array
    */
-  const extractQuestionsFromResultset =(resultset)=> {
+  const extractQuestionsFromResultset =(resultset:any)=> {
     try {
       // The resultset could be a string that needs parsing or already an object
       let parsedResultset;
@@ -78,8 +78,8 @@ export const  extractQuestions =(input) =>{
    * @param {Array} questions - Array of question objects
    * @returns {Array} - Formatted questions array
    */
-  function transformQuestions(questions) {
-    return questions.map(questionObj => {
+  function transformQuestions(questions:any) {
+    return questions.map((questionObj:any) => {
       // Each question is an object with a single key (like Q1, Q2)
       const key = Object.keys(questionObj)[0];
       const questionText = questionObj[key];
@@ -91,7 +91,97 @@ export const  extractQuestions =(input) =>{
     });
   }
   
-  // Example usage:
-  // const jsonInput = { "resultset": {"questions": [{"Q1": "Could you provide more details..."}, {"Q2": "Are there particular times..."}], "chat_uuid": "9df0bb52-3401-4b6f-b91b-39f2f90f521d", "code": "200", "token_count": "271"}, "status": "ok", "summary": "The JSON contains 4 main parts..." };
-  // const questions = extractQuestions(jsonInput);
-  // console.log(questions);
+  export const  extractStakeholders =(response:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response?.resultset);
+
+    // Extract and transform stakeholders
+    return parsedResultset?.stakeholders?.map((stakeholder:any) => ({
+        role: stakeholder.role,
+        feedback: stakeholder.assessment,
+        concerns: stakeholder.concerns,
+        opportunities: stakeholder.opportunities,
+        name: stakeholder.role
+    }));
+  }
+
+  export const  extractClarifyingQiestions =(response:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response.resultset);
+
+    return parsedResultset.clarifying_questions.map((question:any) =>({
+      question,
+      answer:''
+    }))
+  }
+
+  export const  extractEvaluationData =(response:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response.resultset);
+
+    return {
+      "pros": parsedResultset.pros, 
+
+      "cons": parsedResultset.cons, 
+
+      // "impact_percentage": parsedResultset.impact_percentage, 
+      // "feasibility_percentage": parsedResultset.feasibility_percentage, 
+      // "ambiguity_percentage": parsedResultset.ambiguity_percentage
+    }
+
+  }
+
+  export const  extractClarifierData =(response:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response.resultset);
+
+    const applicableTrends = parsedResultset.applicable_trends.map((item:any) => ({
+      trend: item.trend,
+      application: item.application
+    }));
+  
+    // Extract alternative implementations
+    const alternativeImplementations = parsedResultset.alternative_implementations;
+
+    return applicableTrends
+  }
+  export const  extractForIdeasData =(response:any,methodology:any,projectId:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response.resultset);
+
+    const ideas = parsedResultset.ideas.map((item:any) => ({
+      title: item.idea,
+      description: item.description,
+      isAiGenerated:true,
+      methodology,
+      projectId
+    }));
+  
+    return ideas
+  }
+  export const  extractForNeedsData =(response:any,projectId:any,userId:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response.resultset);
+
+    const needs = parsedResultset.needs.map((item:any) => ({
+      need: item.name,
+      reason: item.goal,
+      isAiGenerated:true,
+      projectId,
+      userId
+    }));
+  
+    return needs
+  }
+  export const  extractStoryboardData =(response:any) =>{
+    // Parse the resultset string into a JSON object
+    const parsedResultset = JSON.parse(response.resultset);
+
+    const scenes = parsedResultset.scenes.map((item:any) => ({
+      title: item.title,
+      description: item.description,
+      notes:"",
+    }));
+  
+    return scenes
+  }

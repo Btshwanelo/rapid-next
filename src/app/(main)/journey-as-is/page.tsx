@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useInitilizeJourneyMutation, useLazyGetJourneyAsIsByProjectIdQuery, useUpdateJourneyAsIsMutation } from '@/services/journeyService';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface JourneyCard {
   id: string;
@@ -28,7 +29,7 @@ interface Phase {
 }
 
 export default function JourneyMapPage() {
-  const [activeTab, setActiveTab] = useState<'user' | 'ai' | 'combined'>('user');
+  const [activeTab, setActiveTab] = useState('user');
   const [phases, setPhases] = useState<Phase[]>([
     { id: '1', title: 'Awareness Phase' },
     { id: '2', title: 'Consideration Phase' },
@@ -93,25 +94,20 @@ export default function JourneyMapPage() {
         </div>
         <div className="flex gap-2">
           <Button 
-            variant={activeTab === 'user' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('user')}
-          >
-            USER CREATED
-          </Button>
-          <Button 
-            variant={activeTab === 'ai' ? 'default' : 'outline'}
+            variant={'default'}
             onClick={() => setActiveTab('ai')}
           >
-            AI GENERATED
-          </Button>
-          <Button 
-            variant={activeTab === 'combined' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('combined')}
-          >
-            COMBINED
+            Generate Journey
           </Button>
         </div>
       </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList className='bg-[#0f0f43] p-1'>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="user">User Created</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="ai">AI Generated</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="combined">Combined</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Journey Map Grid */}
       <div className="">

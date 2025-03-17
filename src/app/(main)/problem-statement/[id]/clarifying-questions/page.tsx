@@ -144,7 +144,7 @@ const ClarifyingQuestions = () => {
       const extractedQuestions = extractQuestions(clarifyingQuestionsProps.data);
       
       // Format questions for API
-      const formattedQuestions = extractedQuestions.map(question => ({
+      const formattedQuestions = extractedQuestions.map((question:any) => ({
         question: question.question,
         answer: "",
       }));

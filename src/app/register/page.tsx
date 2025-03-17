@@ -121,7 +121,7 @@ const RegisterPage = () => {
     if (!registerProps.error) return null;
     
     if ('data' in registerProps.error) {
-      return registerProps.error.data?.message || 'Registration failed. Please try again.';
+      return  'Registration failed. Please try again.';
     }
     
     return 'Network error. Please check your connection and try again.';

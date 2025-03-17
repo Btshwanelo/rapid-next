@@ -11,15 +11,18 @@ export const storyboardSlice = apiSlice.injectEndpoints({
         },
         body,
       }),
-      invalidatesTags: [],
+      invalidatesTags: ['story'],
     }),
     UpdateStory: builder.mutation({
-      query: ({body,id}) => ({
+      query: ({body,id,authToken}) => ({
         url: `/storyboards/${id}`,
-        method: 'POST',
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
         body,
       }),
-      invalidatesTags: [],
+      invalidatesTags: ['story'],
     }),
     DeleteStory: builder.mutation({
       query: ({id,authToken}) => ({
@@ -29,7 +32,7 @@ export const storyboardSlice = apiSlice.injectEndpoints({
           Authorization: `Bearer ${authToken}`,
         },
       }),
-      invalidatesTags: [],
+      invalidatesTags: ['story'],
     }),
     UpdateStoryFrame: builder.mutation({
       query: ({body,storyId,frameIndx,authToken}) => ({
@@ -40,7 +43,7 @@ export const storyboardSlice = apiSlice.injectEndpoints({
         },
         body,
       }),
-      invalidatesTags: [],
+      invalidatesTags: ['story'],
     }),
     GetStoriesByProject: builder.query({
         query: ({projectId,authToken}) => ({
@@ -50,6 +53,7 @@ export const storyboardSlice = apiSlice.injectEndpoints({
             Authorization: `Bearer ${authToken}`,
           },
         }),
+        providesTags:['story']
       }),
   }),
 }); 

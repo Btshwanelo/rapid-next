@@ -12,9 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
 import Link from 'next/link';
-import { useCreateIdeaMutation, useDeleteIdeaMutation, useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation } from '@/services/ideaService';
+import { useCreateIdeaMutation, useCreateIdeasMutation, useDeleteIdeaMutation, useLazyGetIdeasByProjectQuery, useUpdateIdeaMutation } from '@/services/ideaService';
 import useProject from '@/hooks/useProject';
 import useAuth from '@/hooks/useAuth';
+import { useGenerateIdeasAnalogyMutation } from '@/slices/autogenApiSlice';
+import { extractForIdeasData } from '@/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface Idea {
   _id: string;
@@ -27,29 +30,7 @@ interface Idea {
   createdAt: Date;
 }
 
-const SCAMPER_PROMPTS = {
-  'Substitute': 'What can you substitute in the current solution?',
-  'Combine': 'What elements could you combine?',
-  'Adapt': 'How could you adapt this for a different context?',
-  'Modify': 'What could you modify or magnify?',
-  'Put to another use': 'What other uses could this have?',
-  'Eliminate': 'What could you eliminate or simplify?',
-  'Reverse': 'What if you reversed the process or perspective?'
-};
 
-const ANALOGY_PROMPTS = {
-  'Nature': 'How does nature solve similar problems?',
-  'Different Industry': 'How do other industries handle this?',
-  'Historical': 'How was this solved in the past?',
-  'Personal': 'How do you handle similar situations in daily life?'
-};
-
-const MAPPING_PROMPTS = {
-  'Central Theme': 'Whats the core concept?',
-  'Branches': 'What are the main categories or aspects?',
-  'Connections': 'How do these elements connect?',
-  'Extensions': 'What are possible extensions or variations?'
-};
 
 const IdeasPage = () => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -58,6 +39,7 @@ const IdeasPage = () => {
   const [selectedMethodology, setSelectedMethodology] = useState<string>('');
   const [generatedIdeas, setGeneratedIdeas] = useState<Idea[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [activeIdeaTab, setActiveIdeaTab] = useState('all');
   const [newIdeaData, setNewIdeaData] = useState({
     title: '',
     description: '',
@@ -67,9 +49,11 @@ const IdeasPage = () => {
   const authDeatils = useAuth()
 
   const [CreateIdea,creatIdeaProps] = useCreateIdeaMutation()
+  const [CreateIdeas,creatIdeasProps] = useCreateIdeasMutation()
   const [UpdateIdea,updateIdeaProps] = useUpdateIdeaMutation()
   const [DeleteIdea,deleteIdeaProps] = useDeleteIdeaMutation()
   const [GetIdeas,getIdeasProps] = useLazyGetIdeasByProjectQuery()
+  const [GenerateIdeasAnalogy,analogyIdeasProps] = useGenerateIdeasAnalogyMutation()
 
 
   const handleAddIdea = (idea: Partial<Idea>) => {
@@ -77,11 +61,26 @@ const IdeasPage = () => {
       "title":idea.title,
       "description":idea.description,
       "projectId":projectDeatils?._id
-  },
-  authToken:authDeatils.token})
+        },
+      authToken:authDeatils.token})
 
     setShowAddDialog(false);
   };
+
+  const handleGenerateIdeas = ()=>{
+    GenerateIdeasAnalogy({message:"Our user is a coffee enthusiast. We will improve their overall coffee shop experience. Currently, this user struggles because finding a quiet place to work or relax in busy coffee shops is difficult. It's kinda like trying to focus while being surrounded by constant noise and distractions. In a perfect world, they would be able to enjoy a peaceful environment with good coffee and a comfortable seat, no matter the time of day. This would be great for the world because it would allow people to find balance and productivity in their daily routines while enjoying high-quality coffee in a welcoming atmosphere."})
+  }
+
+  useEffect(() => {
+    if(analogyIdeasProps.isSuccess){
+      console.log("analogyIdeasProps.data",analogyIdeasProps.data)
+      const ideas= extractForIdeasData(analogyIdeasProps.data,activeIdeaTab,projectDeatils?._id)
+      console.log("analogyIdeasProps.data----------",ideas)
+      CreateIdeas({body:ideas,
+        authToken:authDeatils.token})
+    }
+  }, [analogyIdeasProps.isSuccess])
+  
 
 
   
@@ -120,7 +119,11 @@ const IdeasPage = () => {
   const renderIdeaCard = (idea: Idea) => (
     <Card key={idea._id} className={`w-full bg-[#0f0f43] text-white border-none ${idea?.status === 'rejected' ? 'opacity-60' : ''}`}>
       <CardHeader className="p-4">
-        <CardTitle className="text-lg flex items-center justify-between">
+        <CardTitle className="flex items-center gap-4">
+          <Avatar className="w-16 h-16">
+                    {/* <AvatarImage src={idea.imageUrl} alt={idea.title} /> */}
+                    <AvatarFallback>{idea.title[0]}</AvatarFallback>
+                  </Avatar>
           <span className="flex items-center gap-2">
             {idea.title}
             {idea.isAIGenerated && (
@@ -200,7 +203,7 @@ const IdeasPage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Ideas Management</h1>
         <div className="flex gap-2">
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          {activeTab === "manual"&&<Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" /> Add Idea
@@ -237,20 +240,40 @@ const IdeasPage = () => {
                 </Button>
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
+          {activeTab === "ai"&& activeIdeaTab !='all' &&
+              <Button onClick={handleGenerateIdeas}>
+                <Plus className="w-4 h-4 mr-2" />Generate Ideas
+              </Button>}
 
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className='bg-[#0f0f43] p-1'>
-          <TabsTrigger className="data-[state=active]:bg-blue-600" value="all">All Ideas</TabsTrigger>
           <TabsTrigger className="data-[state=active]:bg-blue-600" value="manual">User Ideas</TabsTrigger>
           <TabsTrigger className="data-[state=active]:bg-blue-600" value="ai">AI Generated</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="all">All Ideas</TabsTrigger>
         </TabsList>
       </Tabs>
+      {activeTab === 'ai'&& <Tabs value={activeIdeaTab} onValueChange={setActiveIdeaTab} className="mb-6">
+        <TabsList className='bg-[#0f0f43] p-1'>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="all">All</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="analogy">Analogy</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="brainstorm">Brainstorm</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="future">Future Thinking</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="random">Random Thinking</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="reverse">Reverse Thinking</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="storming">Role-Storming</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="scamper">Scamper</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="what-if">What-If Scenario</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="mind">Mind Mapping</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="wild">Wild Ideas</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-blue-600" value="worst">Worst Ideas</TabsTrigger>
+        </TabsList>
+      </Tabs>}
 
-      {getIdeasProps?.data?.data.length === 0 ? (
+     {activeTab !='ai'&& (getIdeasProps?.data?.data.length === 0 ? (
       <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -261,15 +284,31 @@ const IdeasPage = () => {
                   return idea.isAiGenerated;
                 case 'manual':
                   return !idea.isAIGenerated;
-                case 'rejected':
-                  return idea.status === 'rejected';
                 default:
                   return idea.isAIGenerated !== null;
               }
             })
             .map(renderIdeaCard)}
         </div>
-      )}
+      ))}
+    {activeTab ==='ai'&&  (getIdeasProps?.data?.data.length === 0 ? (
+      <EmptyState />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {getIdeasProps?.data?.data
+            .filter((idea:any) => {
+              switch (activeIdeaTab) {
+                case 'all':
+                  return idea.isAiGenerated;
+                case 'analogy':
+                  return idea.methodology === 'analogy';
+                default:
+                  return null;
+              }
+            })
+            .map(renderIdeaCard)}
+        </div>
+      ))}
 
       <Dialog open={!!editingIdea} onOpenChange={(open) => !open && setEditingIdea(null)}>
         <DialogContent>

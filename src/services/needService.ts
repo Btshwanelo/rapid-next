@@ -13,6 +13,17 @@ export const needSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['need'],
     }),
+    CreateNeeds: builder.mutation({
+      query: ({body,authToken}) => ({
+        url: `/needs/multiple`,
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body,
+      }),
+      invalidatesTags: ['need'],
+    }),
     UpdateNeed: builder.mutation({
       query: ({body,authToken,id}) => ({
         url: `/needs/${id}`,
@@ -58,6 +69,9 @@ export const needSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useCreateNeedMutation,useDeleteNeedMutation,
-  useLazyGetNeedsByProjectQuery,useUpdateNeedMutation,
+  useCreateNeedMutation,
+  useDeleteNeedMutation,
+  useLazyGetNeedsByProjectQuery,
+  useUpdateNeedMutation,
+  useCreateNeedsMutation,
   useLazyGetNeedsByUserQuery} = needSlice;

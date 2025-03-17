@@ -13,6 +13,17 @@ export const ideaSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['idea'],
     }),
+    CreateIdeas: builder.mutation({
+      query: ({body,authToken}) => ({
+        url: `/ideas/multiple`,
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body,
+      }),
+      invalidatesTags: ['idea'],
+    }),
     UpdateIdea: builder.mutation({
       query: ({body,id,authToken}) => ({
         url: `/ideas/${id}`,
@@ -71,6 +82,8 @@ export const ideaSlice = apiSlice.injectEndpoints({
 export const {
 useCreateIdeaMutation,
 useLazyGetIdeaByIdQuery,
-useLazyGetIdeasByProjectQuery,useUpdateIdeaPositionMutation,
+useLazyGetIdeasByProjectQuery,
+useUpdateIdeaPositionMutation,
+useCreateIdeasMutation,
 useDeleteIdeaMutation,
 useUpdateIdeaMutation} = ideaSlice;

@@ -104,7 +104,7 @@ const LoginPage = () => {
     if (!loginProps.error) return null;
     
     if ('data' in loginProps.error) {
-      return loginProps.error.data?.message || 'Login failed. Please check your credentials.';
+      return 'Login failed. Please check your credentials.';
     }
     
     return 'Network error. Please check your connection and try again.';

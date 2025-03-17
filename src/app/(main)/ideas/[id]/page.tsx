@@ -18,13 +18,17 @@ import {
   Lightbulb,
   CheckCircle2,
   XCircle,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
 import { useLazyGetIdeaByIdQuery, useUpdateIdeaMutation } from '@/services/ideaService';
 import { useParams } from 'next/navigation';
 import useProject from '@/hooks/useProject';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
+import { useIdeaClarifierMutation, useIdeaEvaluatorMutation, useIdeaStakeholderMutation, useIdeaTrendsMutation } from '@/slices/autogenApiSlice';
+import { extractClarifierData, extractClarifyingQiestions, extractEvaluationData, extractStakeholders } from '@/utils';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Define API response interface based on the sample data structure
 interface ApiIdea {
@@ -44,9 +48,9 @@ interface ApiIdea {
   };
   impact?: number;
   feasibility?: number;
-  pros?: string[];
-  cons?: string[];
-  requiredResources?: string[];
+  pros: string[];
+  cons: string[];
+  requiredResources: string[];
   collaborators?: {
     department: string;
     votes: number;
@@ -58,17 +62,17 @@ interface ApiIdea {
     changes: string;
     _id: string;
   }[];
-  clarifyingQuestions?: {
+  clarifyingQuestions: {
     question: string;
     answer?: string;
     _id: string;
   }[];
-  trendApplications?: {
+  trendApplications: {
     trend: string;
     application: string;
     _id: string;
   }[];
-  stakeholderEvaluations?: {
+  stakeholderEvaluations: {
     name: string;
     role: string;
     rating: number;
@@ -82,6 +86,15 @@ interface ApiIdea {
   createdAt: string;
 }
 
+// New interface to track loading states
+interface LoadingStates {
+  initial: boolean;
+  clarifier: boolean;
+  trends: boolean;
+  stakeholder: boolean;
+  evaluator: boolean;
+}
+
 export default function IdeaDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const params = useParams();
@@ -92,44 +105,154 @@ export default function IdeaDetailPage() {
   // RTK Query hooks
   const [updateIdea, updateIdeaProps] = useUpdateIdeaMutation();
   const [getIdea, getIdeaProps] = useLazyGetIdeaByIdQuery();
+  const [IdeaClarifier, clarifierIdeaProps] = useIdeaClarifierMutation();
+  const [IdeaTrends, trendsIdeaProps] = useIdeaTrendsMutation();
+  const [IdeaStakeholder, stakeholderIdeaProps] = useIdeaStakeholderMutation();
+  const [IdeaEvaluator, evaluatorIdeaProps] = useIdeaEvaluatorMutation();
 
   // Loading and error states
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({
+    initial: true,
+    clarifier: false,
+    trends: false,
+    stakeholder: false,
+    evaluator: false
+  });
   const [error, setError] = useState<string | null>(null);
+  
+  // State to track which enhancement calls have been initiated
+  const [enhancementCalls, setEnhancementCalls] = useState({
+    clarifier: false,
+    trends: false,
+    stakeholder: false,
+    evaluator: false
+  });
 
-  // Fetch idea data when component mounts
   useEffect(() => {
-    if (id && authDetails?.token) {
-      getIdea({ authToken: authDetails.token, id });
-    }
-  }, [id, authDetails?.token, getIdea]);
+    getIdea({ authToken: authDetails.token, id });
+  }, []);
 
   // Update loading and error states based on API response
   useEffect(() => {
     if (getIdeaProps.isLoading) {
-      setIsLoading(true);
+      setLoadingStates(prev => ({ ...prev, initial: true }));
     } else if (getIdeaProps.isError) {
-      setIsLoading(false);
+      setLoadingStates(prev => ({ ...prev, initial: false }));
       setError('Failed to load idea details. Please try again.');
     } else if (getIdeaProps.isSuccess) {
-      setIsLoading(false);
+      setLoadingStates(prev => ({ ...prev, initial: false }));
       setError(null);
+
+      const idea = getIdeaProps.data.data;
+
+      // Check if we need to make enhancement API calls and haven't initiated them yet
+      if (idea.clarifyingQuestions.length === 0 && !enhancementCalls.clarifier) {
+        setLoadingStates(prev => ({ ...prev, clarifier: true }));
+        IdeaClarifier({message:`Idea: ${idea.title}. IedaDescription: ${idea.description}`});
+        setEnhancementCalls(prev => ({ ...prev, clarifier: true }));
+      }
+
+      if (idea.trendApplications.length === 0 && !enhancementCalls.trends) {
+        setLoadingStates(prev => ({ ...prev, trends: true }));
+        IdeaTrends({message:`Idea: ${idea.title}. IedaDescription: ${idea.description}`});
+        setEnhancementCalls(prev => ({ ...prev, trends: true }));
+      }
+
+      if (idea.stakeholderEvaluations.length === 0 && !enhancementCalls.stakeholder) {
+        setLoadingStates(prev => ({ ...prev, stakeholder: true }));
+        IdeaStakeholder({message:`Idea: ${idea.title}. IedaDescription: ${idea.description}`});
+        setEnhancementCalls(prev => ({ ...prev, stakeholder: true }));
+      }
+
+      if ((idea.pros.length === 0 || idea.cons.length === 0) && !enhancementCalls.evaluator) {
+        setLoadingStates(prev => ({ ...prev, evaluator: true }));
+        IdeaEvaluator({message:`Idea: ${idea.title}. IedaDescription: ${idea.description}`});
+        setEnhancementCalls(prev => ({ ...prev, evaluator: true }));
+      }
     }
   }, [getIdeaProps.isLoading, getIdeaProps.isError, getIdeaProps.isSuccess]);
 
-  // Get the idea data from the API response
-  const idea = getIdeaProps.data?.data as ApiIdea | undefined;
+  // Handle clarifier API response
+  useEffect(() => {
+    if (clarifierIdeaProps.isLoading) {
+      setLoadingStates(prev => ({ ...prev, clarifier: true }));
+    } else if (clarifierIdeaProps.isSuccess) {
+      const clarifyingQuestions = extractClarifyingQiestions(clarifierIdeaProps.data);
+      updateIdea({body:{clarifyingQuestions}, id, authToken:authDetails.token});
+      setLoadingStates(prev => ({ ...prev, clarifier: false }));
+    } else if (clarifierIdeaProps.isError) {
+      setLoadingStates(prev => ({ ...prev, clarifier: false }));
+    }
+  }, [clarifierIdeaProps.isLoading, clarifierIdeaProps.isSuccess, clarifierIdeaProps.isError]);
 
-  // Render loading state
-  if (isLoading) {
+  // Handle trends API response
+  useEffect(() => {
+    if (trendsIdeaProps.isLoading) {
+      setLoadingStates(prev => ({ ...prev, trends: true }));
+    } else if (trendsIdeaProps.isSuccess) {
+      const applicableTrends = extractClarifierData(trendsIdeaProps.data);
+      updateIdea({body:{trendApplications:applicableTrends}, id, authToken:authDetails.token});
+      setLoadingStates(prev => ({ ...prev, trends: false }));
+    } else if (trendsIdeaProps.isError) {
+      setLoadingStates(prev => ({ ...prev, trends: false }));
+    }
+  }, [trendsIdeaProps.isLoading, trendsIdeaProps.isSuccess, trendsIdeaProps.isError]);
+
+  // Handle stakeholder API response
+  useEffect(() => {
+    if (stakeholderIdeaProps.isLoading) {
+      setLoadingStates(prev => ({ ...prev, stakeholder: true }));
+    } else if (stakeholderIdeaProps.isSuccess) {
+      const stakeholders = extractStakeholders(stakeholderIdeaProps.data);
+      updateIdea({body:{stakeholderEvaluations:stakeholders}, id, authToken:authDetails.token});
+      setLoadingStates(prev => ({ ...prev, stakeholder: false }));
+    } else if (stakeholderIdeaProps.isError) {
+      setLoadingStates(prev => ({ ...prev, stakeholder: false }));
+    }
+  }, [stakeholderIdeaProps.isLoading, stakeholderIdeaProps.isSuccess, stakeholderIdeaProps.isError]);
+
+  // Handle evaluator API response
+  useEffect(() => {
+    if (evaluatorIdeaProps.isLoading) {
+      setLoadingStates(prev => ({ ...prev, evaluator: true }));
+    } else if (evaluatorIdeaProps.isSuccess) {
+      const evaluationData = extractEvaluationData(evaluatorIdeaProps.data);
+      updateIdea({body:evaluationData, id, authToken:authDetails.token});
+      setLoadingStates(prev => ({ ...prev, evaluator: false }));
+    } else if (evaluatorIdeaProps.isError) {
+      setLoadingStates(prev => ({ ...prev, evaluator: false }));
+    }
+  }, [evaluatorIdeaProps.isLoading, evaluatorIdeaProps.isSuccess, evaluatorIdeaProps.isError]);
+
+  const idea = getIdeaProps.data?.data as ApiIdea ;
+
+  // Helper function to determine if any AI enhancement is in progress
+  const isAnyEnhancementLoading = () => {
+    return loadingStates.clarifier || loadingStates.trends || 
+           loadingStates.stakeholder || loadingStates.evaluator;
+  };
+
+  // Helper function to get active enhancements
+  const getActiveEnhancements = () => {
+    const active = [];
+    if (loadingStates.clarifier) active.push("clarifying questions");
+    if (loadingStates.trends) active.push("trend applications");
+    if (loadingStates.stakeholder) active.push("stakeholder evaluations");
+    if (loadingStates.evaluator) active.push("pros & cons analysis");
+    return active;
+  };
+
+  if (loadingStates.initial) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-white">Loading idea details...</p>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500 mb-4" />
+          <p className="text-white">Loading idea details...</p>
+        </div>
       </div>
     );
   }
 
-  // Render error state
   if (error || !idea) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -151,10 +274,8 @@ export default function IdeaDetailPage() {
       <div className="flex justify-between items-start">
         <div>
           <Link href={'/ideas'} className='flex text-gray-400 mb-2'>
-          {/* <Button variant={'ghost'}> */}
-           <ArrowLeft className='text-gray-400 mr-1' /> back
+            <ArrowLeft className='text-gray-400 mr-1' /> back
           </Link>
-          {/* </Button> */}
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
             <span>{idea.category}</span>
             <ChevronRight className="h-4 w-4" />
@@ -165,10 +286,19 @@ export default function IdeaDetailPage() {
           <h1 className="text-3xl font-bold text-white">{idea.title}</h1>
           <p className="text-gray-400 mt-2">{idea.description}</p>
         </div>
-        {/* <Button className="bg-blue-600 hover:bg-blue-700">
-          Edit Idea
-        </Button> */}
       </div>
+
+      {/* AI Enhancement Status Banner */}
+      {isAnyEnhancementLoading() && (
+        <Alert className="bg-blue-900/30 border-blue-800">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-400 mr-2" />
+          <AlertTitle className="text-blue-300">AI enhancements in progress</AlertTitle>
+          <AlertDescription className="text-blue-200">
+            We're generating {getActiveEnhancements().join(", ")} for this idea. 
+            This may take a moment. You can still explore the available content while we work on enhancing your idea.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 gap-6">
@@ -176,18 +306,32 @@ export default function IdeaDetailPage() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-white font-semibold">Impact</h3>
-              <span className="text-blue-400">{idea.impact}%</span>
+              {loadingStates.evaluator ? (
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-400 mr-2" />
+                  <span className="text-blue-400">Calculating...</span>
+                </div>
+              ) : (
+                <span className="text-blue-400">{idea.impact}%</span>
+              )}
             </div>
-            <Progress value={idea.impact} className="bg-blue-950" />
+            <Progress value={loadingStates.evaluator ? 15 : idea.impact} className="bg-blue-950" />
           </CardContent>
         </Card>
         <Card className="bg-[#0f0f43] border-none">
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-white font-semibold">Feasibility</h3>
-              <span className="text-blue-400">{idea.feasibility}%</span>
+              {loadingStates.evaluator ? (
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-400 mr-2" />
+                  <span className="text-blue-400">Calculating...</span>
+                </div>
+              ) : (
+                <span className="text-blue-400">{idea.feasibility}%</span>
+              )}
             </div>
-            <Progress value={idea.feasibility} className="bg-blue-950" />
+            <Progress value={loadingStates.evaluator ? 15 : idea.feasibility} className="bg-blue-950" />
           </CardContent>
         </Card>
       </div>
@@ -200,12 +344,21 @@ export default function IdeaDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="questions" className="data-[state=active]:bg-blue-600">
             Clarifying Questions
+            {loadingStates.clarifier && (
+              <Loader2 className="h-3 w-3 animate-spin ml-2" />
+            )}
           </TabsTrigger>
           <TabsTrigger value="trends" className="data-[state=active]:bg-blue-600">
             Trend Applications
+            {loadingStates.trends && (
+              <Loader2 className="h-3 w-3 animate-spin ml-2" />
+            )}
           </TabsTrigger>
           <TabsTrigger value="stakeholders" className="data-[state=active]:bg-blue-600">
             Stakeholder Evaluations
+            {loadingStates.stakeholder && (
+              <Loader2 className="h-3 w-3 animate-spin ml-2" />
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -217,17 +370,29 @@ export default function IdeaDetailPage() {
                 <CardTitle className="text-white flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                   Pros
+                  {loadingStates.evaluator && (
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  {idea.pros?.map((pro, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-300">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 mt-1" />
-                      {pro}
-                    </li>
-                  ))}
-                </ul>
+                {loadingStates.evaluator ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-gray-400">
+                    <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
+                    <p>Analyzing the advantages of this idea...</p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {idea?.pros?.length > 0 ? idea?.pros?.map((pro, index) => (
+                      <li key={index} className="flex items-start gap-2 text-gray-300">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-1" />
+                        {pro}
+                      </li>
+                    )) : (
+                      <p className="text-gray-400">No pros available yet.</p>
+                    )}
+                  </ul>
+                )}
               </CardContent>
             </Card>
             <Card className="bg-[#0f0f43] border-none">
@@ -235,17 +400,29 @@ export default function IdeaDetailPage() {
                 <CardTitle className="text-white flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-red-500" />
                   Cons
+                  {loadingStates.evaluator && (
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  {idea.cons?.map((con, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-300">
-                      <XCircle className="h-4 w-4 text-red-500 mt-1" />
-                      {con}
-                    </li>
-                  ))}
-                </ul>
+                {loadingStates.evaluator ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-gray-400">
+                    <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
+                    <p>Identifying potential challenges...</p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {idea.cons?.length > 0 ? idea.cons.map((con, index) => (
+                      <li key={index} className="flex items-start gap-2 text-gray-300">
+                        <XCircle className="h-4 w-4 text-red-500 mt-1" />
+                        {con}
+                      </li>
+                    )) : (
+                      <p className="text-gray-400">No cons available yet.</p>
+                    )}
+                  </ul>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -256,6 +433,9 @@ export default function IdeaDetailPage() {
               <CardTitle className="text-white flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Timeline & Resources
+                {loadingStates.evaluator && (
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-6">
@@ -267,11 +447,20 @@ export default function IdeaDetailPage() {
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-4">Required Resources</h3>
-                <ul className="space-y-2">
-                  {idea.requiredResources?.map((resource, index) => (
-                    <li key={index} className="text-gray-300">{resource}</li>
-                  ))}
-                </ul>
+                {loadingStates.evaluator ? (
+                  <div className="flex items-center text-gray-400">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span>Identifying required resources...</span>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {idea?.requiredResources?.length > 0 ? idea?.requiredResources?.map((resource, index) => (
+                      <li key={index} className="text-gray-300">{resource}</li>
+                    )) : (
+                      <p className="text-gray-400">No resources identified yet.</p>
+                    )}
+                  </ul>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -279,18 +468,28 @@ export default function IdeaDetailPage() {
 
         <TabsContent value="questions" className="space-y-6">
           <Card className="bg-[#0f0f43] border-none">
-            <CardContent className="p-6 space-y-6">
-              {idea.clarifyingQuestions?.length ? (
-                idea.clarifyingQuestions.map((q, index) => (
-                  <div key={index} className="space-y-2">
-                    <h3 className="text-white font-semibold">{q.question}</h3>
-                    <p className="text-gray-300 bg-blue-500/10 p-4 rounded-lg">
-                      {q.answer || 'Not answered yet'}
-                    </p>
-                  </div>
-                ))
+            <CardContent className="p-6">
+              {loadingStates.clarifier ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <Loader2 className="h-10 w-10 animate-spin mb-4 text-blue-500" />
+                  <p className="text-lg mb-2">Generating clarifying questions...</p>
+                  <p className="text-sm text-gray-500">This helps stakeholders better understand the idea.</p>
+                </div>
               ) : (
-                <p className="text-gray-400">No clarifying questions available.</p>
+                <div className="space-y-6">
+                  {idea.clarifyingQuestions?.length ? (
+                    idea.clarifyingQuestions.map((q, index) => (
+                      <div key={index} className="space-y-2">
+                        <h3 className="text-white font-semibold">{q.question}</h3>
+                        <p className="text-gray-300 bg-blue-500/10 p-4 rounded-lg">
+                          {q.answer || 'Not answered yet'}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400">No clarifying questions available yet.</p>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -298,19 +497,29 @@ export default function IdeaDetailPage() {
 
         <TabsContent value="trends" className="space-y-6">
           <Card className="bg-[#0f0f43] border-none">
-            <CardContent className="p-6 space-y-6">
-              {idea.trendApplications?.length ? (
-                idea.trendApplications.map((trend, index) => (
-                  <div key={index} className="flex items-start gap-4 bg-blue-500/10 p-4 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-blue-400 mt-1" />
-                    <div>
-                      <h3 className="text-white font-semibold">{trend.trend}</h3>
-                      <p className="text-gray-300 mt-1">{trend.application}</p>
-                    </div>
-                  </div>
-                ))
+            <CardContent className="p-6">
+              {loadingStates.trends ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <Loader2 className="h-10 w-10 animate-spin mb-4 text-blue-500" />
+                  <p className="text-lg mb-2">Analyzing market trends...</p>
+                  <p className="text-sm text-gray-500">We're identifying relevant trends and their applications to this idea.</p>
+                </div>
               ) : (
-                <p className="text-gray-400">No trend applications available.</p>
+                <div className="space-y-6">
+                  {idea.trendApplications?.length ? (
+                    idea.trendApplications.map((trend, index) => (
+                      <div key={index} className="flex items-start gap-4 bg-blue-500/10 p-4 rounded-lg">
+                        <TrendingUp className="h-5 w-5 text-blue-400 mt-1" />
+                        <div>
+                          <h3 className="text-white font-semibold">{trend.trend}</h3>
+                          <p className="text-gray-300 mt-1">{trend.application}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400">No trend applications available yet.</p>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -318,64 +527,74 @@ export default function IdeaDetailPage() {
 
         <TabsContent value="stakeholders" className="space-y-6">
           <div className="grid gap-6">
-            {idea.stakeholderEvaluations?.length ? (
-              idea.stakeholderEvaluations.map((stakeholder, index) => (
-                <Card key={index} className="bg-[#0f0f43] border-none">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <Avatar>
-                          <AvatarImage src={stakeholder.avatar} />
-                          <AvatarFallback>{stakeholder.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="text-white font-semibold">{stakeholder.name}</h3>
-                          <p className="text-gray-400">{stakeholder.role}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-5 w-5 ${
-                              i < Math.min(stakeholder.rating / 2, 5)
-                                ? 'text-yellow-400 fill-yellow-400' 
-                                : 'text-gray-600'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-gray-300 mt-4">{stakeholder.feedback}</p>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <h4 className="text-red-400 font-medium mb-2">Concerns:</h4>
-                        <ul className="space-y-1">
-                          {stakeholder.concerns.map((concern, i) => (
-                            <li key={i} className="text-gray-300 flex items-start gap-2">
-                              <AlertCircle className="h-4 w-4 text-red-400 mt-1" />
-                              {concern}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="text-green-400 font-medium mb-2">Opportunities:</h4>
-                        <ul className="space-y-1">
-                          {stakeholder.opportunities.map((opportunity, i) => (
-                            <li key={i} className="text-gray-300 flex items-start gap-2">
-                              <Lightbulb className="h-4 w-4 text-green-400 mt-1" />
-                              {opportunity}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+            {loadingStates.stakeholder ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                <Loader2 className="h-10 w-10 animate-spin mb-4 text-blue-500" />
+                <p className="text-lg mb-2">Generating stakeholder evaluations...</p>
+                <p className="text-sm text-gray-500">We're analyzing how different stakeholders might view this idea.</p>
+              </div>
             ) : (
-              <p className="text-gray-400">No stakeholder evaluations available.</p>
+              <>
+                {idea.stakeholderEvaluations?.length ? (
+                  idea.stakeholderEvaluations.map((stakeholder, index) => (
+                    <Card key={index} className="bg-[#0f0f43] border-none">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4">
+                            <Avatar>
+                              <AvatarImage src={stakeholder.avatar} />
+                              <AvatarFallback>{stakeholder.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="text-white font-semibold">{stakeholder.name}</h3>
+                              <p className="text-gray-400">{stakeholder.role}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-5 w-5 ${
+                                  i < Math.min(stakeholder.rating / 2, 5)
+                                    ? 'text-yellow-400 fill-yellow-400' 
+                                    : 'text-gray-600'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-gray-300 mt-4">{stakeholder.feedback}</p>
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div>
+                            <h4 className="text-red-400 font-medium mb-2">Concerns:</h4>
+                            <ul className="space-y-1">
+                              {stakeholder.concerns.map((concern, i) => (
+                                <li key={i} className="text-gray-300 flex items-start gap-2">
+                                  <AlertCircle className="h-4 w-4 text-red-400 mt-1" />
+                                  {concern}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="text-green-400 font-medium mb-2">Opportunities:</h4>
+                            <ul className="space-y-1">
+                              {stakeholder.opportunities.map((opportunity, i) => (
+                                <li key={i} className="text-gray-300 flex items-start gap-2">
+                                  <Lightbulb className="h-4 w-4 text-green-400 mt-1" />
+                                  {opportunity}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No stakeholder evaluations available yet.</p>
+                )}
+              </>
             )}
           </div>
         </TabsContent>

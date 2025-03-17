@@ -1,6 +1,6 @@
 import { fetchBaseQuery, createApi } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://localhost:5002/api/v2";
+const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL || "http://172.172.166.174:5002/api/v2";
 
 
 const baseQuery = fetchBaseQuery({
@@ -13,6 +13,6 @@ const baseQuery = fetchBaseQuery({
 
 export const apiSlice = createApi({
   baseQuery,
-  tagTypes: ['facility-data', 'accommodation-applications','problem','idea','need'],
+  tagTypes: ['facility-data', 'accommodation-applications','problem','idea','need','story'],
   endpoints: (builder) => ({}),
 });

@@ -215,7 +215,7 @@ const ProblemStatementsPage = () => {
   const getEditingStatement = (): FormData | null => {
     if (!editingId || !problemProps?.data?.data) return null;
     
-    const statement = problemProps.data.data.find(s => s._id === editingId);
+    const statement = problemProps.data.data.find((s:any) => s._id === editingId);
     
     if (!statement) return null;
     

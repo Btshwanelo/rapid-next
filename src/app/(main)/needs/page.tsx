@@ -12,16 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EmptyState from '@/components/ui/EmptyState';
-import { useCreateNeedMutation, useDeleteNeedMutation, useLazyGetNeedsByProjectQuery, useLazyGetNeedsByUserQuery, useUpdateNeedMutation } from '@/services/needService';
+import { useCreateNeedMutation, useCreateNeedsMutation, useDeleteNeedMutation, useLazyGetNeedsByProjectQuery, useLazyGetNeedsByUserQuery, useUpdateNeedMutation } from '@/services/needService';
 import { useLazyGetPersonasListByProjectQuery } from '@/services/personaService';
-import useProject from '@/hooks/useProject';
 import useAuth from '@/hooks/useAuth';
+import { useGenerateNeedsMutation } from '@/slices/autogenApiSlice';
+import { extractForNeedsData } from '@/utils';
+import useProject from '@/hooks/useProject';
+
 
 interface NeedsStatement {
   id: string;
   personaId: string;
-  statement: string;
-  context: string;
+  need: string;
+  reason: string;
   priority: 'high' | 'medium' | 'low';
   category: string;
   isAIGenerated?: boolean;
@@ -109,14 +112,12 @@ const NeedsStatementForm = ({
 
 const NeedsStatementCard = ({
   statement,
-  persona,
   onEdit,
   onDelete,
   onKeep,
   onReject,
 }: {
   statement: NeedsStatement;
-  persona: Persona;
   onEdit?: () => void;
   onDelete?: () => void;
   onKeep?: () => void;
@@ -129,10 +130,10 @@ const NeedsStatementCard = ({
   };
 
   return (
-    <Card className={statement.status === 'rejected' ? 'opacity-60' : '','bg-[#0f0f43] text-white border-none'}>
+    <Card className={'bg-[#0f0f43] text-white border-none'}>
       <CardHeader className="p-4">
         <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Avatar className="w-8 h-8">
               <AvatarImage src={persona?.avatarUrl} alt={persona.name} />
               <AvatarFallback>{persona.name[0]}</AvatarFallback>
@@ -141,7 +142,7 @@ const NeedsStatementCard = ({
               <h3 className="font-medium">{persona.name}</h3>
               <p className="text-sm ">{persona.occupation}</p>
             </div>
-          </div>
+          </div> */}
           <div className="flex gap-2">
             <Badge className={priorityColors[statement.priority]}>
               {statement.priority} priority
@@ -207,40 +208,43 @@ const NeedsStatementsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+    const [activeTab, setActiveTab] = useState('all');
   const projectDeatils = useProject()
   const authDeatils = useAuth()
-    const [GetPersonasListByProject,getPersonasProps] =useLazyGetPersonasListByProjectQuery()
+
+  const [GetPersonasListByProject,getPersonasProps] =useLazyGetPersonasListByProjectQuery()
   const [CreateNeed,createProps] = useCreateNeedMutation()
+  const [CreateNeeds,createNeedsProps] = useCreateNeedsMutation()
   const [GetNeedsByUser,getProps]= useLazyGetNeedsByUserQuery()
   const [UpdateNeed,updateProps] = useUpdateNeedMutation()
   const [DeleteNeed,deleteProps] = useDeleteNeedMutation()
+  const [GenerateNeeds,generateNeedsProps] = useGenerateNeedsMutation()
+
       useEffect(() => {
         GetPersonasListByProject({id:projectDeatils?._id,authToken:authDeatils.token})
       }, [])
 
   const handleAddStatement = (data: Partial<NeedsStatement>) => {
-
     CreateNeed({
       body:{
         userId:selectedPersonaId,
-        need: data.statement,
-        reason: data.context,
+        need: data.need,
+        reason: data.reason,
         projectId:projectDeatils?._id
       }
       ,authToken:authDeatils.token})
-    // setNeedsStatements([...needsStatements, newStatement]);
-    // setShowAddDialog(false);
+
+    setShowAddDialog(false);
   };
 
   const handleEditStatement = (data: Partial<NeedsStatement>) => {
     if (!editingId) return;
-    console.log("----",data)
 
     UpdateNeed({
       body:{
         userId:selectedPersonaId,
-        need: data.statement,
-        reason: data.context,
+        need: data.need,
+        reason: data.reason,
         projectId:projectDeatils?._id
       }
       ,authToken:authDeatils.token
@@ -292,33 +296,19 @@ const NeedsStatementsPage = () => {
 
   const generateAINeedsStatements = async (personaId: string) => {
     setIsGenerating(true);
+
+    GenerateNeeds({message:"Our user is a coffee enthusiast. We will improve their overall coffee shop experience. Currently, this user struggles because finding a quiet place to work or relax in busy coffee shops is difficult. It's kinda like trying to focus while being surrounded by constant noise and distractions. In a perfect world, they would be able to enjoy a peaceful environment with good coffee and a comfortable seat, no matter the time of day. This would be great for the world because it would allow people to find balance and productivity in their daily routines while enjoying high-quality coffee in a welcoming atmosphere."})
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Example AI-generated needs statements
-    const aiStatements: NeedsStatement[] = [
-      {
-        id: `ai-${Date.now()}-1`,
-        personaId,
-        statement: "Needs a streamlined way to track multiple design projects simultaneously",
-        context: "Managing various project timelines and deliverables",
-        priority: "high",
-        category: "Productivity",
-        isAIGenerated: true,
-        status: 'active',
-        createdAt: new Date()
-      },
-      // Add more AI-generated statements
-    ];
-    
-    setNeedsStatements([...needsStatements, ...aiStatements]);
     setIsGenerating(false);
   };
 
-  const filteredStatements = needsStatements
-    .filter(statement => selectedPersonaId === 'all' || statement.personaId === selectedPersonaId)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  useEffect(() => {
+    if(generateNeedsProps.isSuccess){
+      const needs = extractForNeedsData(generateNeedsProps.data,projectDeatils?._id,selectedPersonaId);
+      CreateNeeds({body:needs,authToken:authDeatils.token})
+    }
+  }, [generateNeedsProps.isSuccess])
+  
 
   return (
     <div className="p-6">
@@ -333,7 +323,7 @@ const NeedsStatementsPage = () => {
               <SelectValue placeholder="Filter by Persona" />
             </SelectTrigger>
             <SelectContent>
-              {getPersonasProps?.data?.data.map(persona => (
+              {getPersonasProps?.data?.data.map((persona:any) => (
                               <SelectItem 
                                 key={persona._id} 
                                 value={persona._id}
@@ -346,7 +336,7 @@ const NeedsStatementsPage = () => {
             </SelectContent>
           </Select>
 
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+         {activeTab ==='manual'&& <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" /> Add Need
@@ -364,11 +354,11 @@ const NeedsStatementsPage = () => {
                 selectedPersonaId={selectedPersonaId}
               />
             </DialogContent>
-          </Dialog>
+          </Dialog>}
 
-          {selectedPersonaId && (
+          {activeTab ==='ai' && (
             <Button
-              variant="secondary"
+              variant="default"
               onClick={() => generateAINeedsStatements(selectedPersonaId)}
               disabled={isGenerating}
             >
@@ -378,26 +368,40 @@ const NeedsStatementsPage = () => {
           )}
         </div>
       </div>
+       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className='bg-[#0f0f43] p-1'>
+                <TabsTrigger className="data-[state=active]:bg-blue-600" value="manual">User Needs</TabsTrigger>
+                <TabsTrigger className="data-[state=active]:bg-blue-600" value="ai">AI Generated</TabsTrigger>
+                <TabsTrigger className="data-[state=active]:bg-blue-600" value="all">All Needs</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
       {getProps?.data?.data?.length === 0 ? (
        
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {getProps?.data?.data?.map(statement => {
-            const persona = getPersonasProps?.data?.data.find(p => p._id === statement.userId)!;
-            return (
+          {getProps?.data?.data
+            .filter((need:any) => {
+              switch (activeTab) {
+                case 'ai':
+                  return need.isAiGenerated;
+                case 'manual':
+                  return !need.isAIGenerated;
+                default:
+                  return need.isAIGenerated !== null;
+              }
+            }).map((need:any)=>(
               <NeedsStatementCard
-                key={statement._id}
-                statement={statement}
-                persona={persona}
-                onEdit={() => setEditingId(statement._id)}
-                onDelete={() => handleDeleteStatement(statement._id)}
-                onKeep={() => handleKeepStatement(statement._id)}
-                onReject={() => handleRejectStatement(statement._id)}
+              key={need._id}
+              statement={need}
+              onEdit={() => setEditingId(need._id)}
+              onDelete={() => handleDeleteStatement(need._id)}
+              onKeep={() => handleKeepStatement(need._id)}
+              onReject={() => handleRejectStatement(need._id)}
               />
-            );
-          })}
+            )
+          )}
         </div>
       )}
 
@@ -407,10 +411,10 @@ const NeedsStatementsPage = () => {
           <DialogHeader>
             <DialogTitle>Edit Needs Statement</DialogTitle>
           </DialogHeader>
-          {editingId && getProps?.data?.data.find(s => s._id === editingId) && (
+          {editingId && getProps?.data?.data.find((s:any) => s._id === editingId) && (
             <NeedsStatementForm
               personas={personas}
-              initialData={getProps?.data?.data.find(s => s._id === editingId)!}
+              initialData={getProps?.data?.data.find((s:any) => s._id === editingId)!}
               onSubmit={handleEditStatement}
               submitLabel="Save Changes"
               selectedPersonaId={selectedPersonaId}
